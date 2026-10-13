@@ -38,3 +38,85 @@ I skip introducing NN and jump into the use case. The whole process for developi
 ![image](materials/pictures/MLP.png)
 
 This network is trained using the training dataset and then testing data is passed into the neural network to generate the predictions. For example, Enter a long position when the neural network predicted ‘1’, otherwise, not. The idea then is that, to increase the accuracy of our model, we can increase the number of feature one at a time and analyze the accuracy of it. The goal is to add complexity and observe how accurate our model is in trainig and testing. Eventually, we try to find the sweet spot where the training, testing and overall error of the model is minimum. 
+
+## Smart Money Concept
+the Smart Money Concept (SMC), a trading approach focusing on institutional footprints rather than traditional price action. It outlines key concepts such as order blocks, fair value gaps, and liquidity grabs to decode market imbalances. By understanding these vital concepts, traders can make informed decisions and capitalize on high-probability trading opportunities. Unlike traditional retail strategies, which rely on basic price action and indicators, SMC dives into market structure shifts, order blocks, liquidity grabs, and fair value gaps (FVGs) to track the footprints of big players like banks and hedge funds. SMC is a sophisticated trading strategy that focuses on understanding and anticipating the actions of institutional investors often referred to as “smart money” who have the resources and knowledge to significantly influence market trends. It involves identifying and interpreting the footprints of these institutional players, allowing retail traders to align their strategies with the dominant market forces. By understanding how these “big fish” operate, retail traders can potentially improve their odds of success and navigate the market with greater confidence.
+The core principles of SMC trading revolve around:
+
+1) Supply and Demand Dynamics: SMC emphasizes understanding the imbalances between supply and demand created by institutional orders. These imbalances create zones of high buying or selling pressure, which can be identified on price charts.
+2) Institutional Activity: The focus is on recognizing and analyzing the behaviors of institutional investors, whose large trades have a notable impact on market direction.
+3) Market Imabalance: SMC pinpoints how institutional orders due to their size create imbalances that propel price movements in specific directions.
+By understanding these core principles, traders can pinpoint high-probability trading opportunities and refine their decision-making processes.
+
+Below are the core SMC concepts, along with detailed guidance on how to recognize them during chart analysis. 
+| Concept | Description |
+|---|---|
+| **Order Block** | A price level where large institutional orders are placed, often visible as clusters of candles with high volume near key swing highs/lows or support/resistance. Institutional Footprint: These zones indicate where large buy or sell orders were placed, creating significant price reactions.|
+| **Fair Value Gap (FVG)** | A gap on the chart indicating an imbalance between supply and demand, often acting as a magnet for price to return and fill. |
+| **Liquidity Grab** | A sudden price move designed to trigger stop-loss orders placed by retail traders, creating opportunities for smart money to accumulate or distribute positions. |
+| **Breaker Block** | A failed order block that signals a potential trend change when price breaks through it and continues in the opposite direction. |
+| **Mitigation Block** | A zone where price retests a previous breakout level after a sharp move, helping confirm the validity of the breakout and the trend's strength. |
+| **Break of Structure (BOS)** | Occurs when price decisively breaks above a significant swing high or below a significant swing low, indicating a potential market trend shift. |
+| **Change of Character (ChoCH)** | A notable change in market behavior, often observed after a BOS, confirming a potential trend reversal. |
+| **Accumulation/Distribution** | Phases in a market cycle where smart money quietly accumulates (buys) or distributes (sells) positions, often based on Wyckoff's schematics. |
+
+* Break of Structure (BOS) & Market Structure Shifts (MSS)
+BOS occurs when price decisively breaks above a significant swing high in an uptrend or below a significant swing low in a downtrend, signaling the continuation of the prevailing trend. MSS (Market Structure Shift) occurs when price breaks structure against the current trend. In a downtrend, this means price breaks above the most recent lower high; in an uptrend, it means price breaks below the most recent higher low. This counter-trend break serves as an early warning that the market’s directional bias may be shifting.
+
+Key Distinction:
+
+BOS = Structure break aligned with the trend, confirming momentum and trend continuation.
+
+MSS = Structure break opposing the trend, suggesting potential reversal and often marking the initial phase of a trend change.
+
+Significance: While BOS validates that institutional players remain committed to the existing trend, MSS provides a critical early signal that smart money may be repositioning. An MSS often precedes a full trend reversal and is typically followed by a Change of Character (ChoCH), which further confirms the shift in market sentiment. Recognizing MSS allows traders to anticipate reversals before they become obvious to the broader market, positioning themselves ahead of the crowd.
+
+When an MSS is identified, traders should look for confluence with other SMC concepts such as order blocks, fair value gaps, or liquidity grabs at the MSS level. This combination increases the probability of a successful reversal trade. However, it’s prudent to wait for additional confirmation through a ChoCH or a bullish/bearish engulfing candle before entering counter-trend positions.
+
+One of the most powerful yet underutilized strategies in Smart Money Concepts is multi-timeframe analysis. While some traders rely solely on one chart period, SMC traders use a multi-timeframe approach to get a complete picture of the market, examining both the broader picture and finer details. This systematic approach significantly increases trading accuracy and helps traders avoid counter-trend trades that often result in losses.
+
+### SMC Framework for trading (strategy)
+* Step 1: Identify Market Trend on Higher Timeframes: We begin our analysis on high time frames (1H or 4H) to understand the primary trend and major structural levels. Specifically, we look for 
+- Significant swing highs and swing lows
+- Key supply and demand areas
+- Order blocks where institutions have placed large orders
+- Break of Structure (BOS) or Change of Character (ChoCH) signals
+
+For most traders, the hourly (H1) timeframe is perfect for market structure analysis as it reduces noise while providing enough trading opportunities.
+
+* Step 2: Define Key SMC Zones and Structures: Once we've identified the trend, mark critical zones on our higher timeframe chart
+- Order blocks that caused significant price reactions
+- Fair Value Gaps (FVGs) that haven’t been filled
+- Liquidity pools at equal highs/lows
+- Premium and discount zones using Fibonacci levels (0.62-0.79 retracement)
+
+These higher timeframe zones become our “areas of interest” where we’ll look for lower timeframe confirmations.
+
+* Step 3: Fine-Tune with Lower Timeframes: Use a lower timeframe like the 15-minute (typically for 4H) or 5-minute (typically for 1H) chart to pinpoint precise entry and exit signals, focusing on smaller price movements and patterns that indicate optimal trade entry. The lower timeframe should be used solely for timing, while overall decision-making remains guided by higher timeframe analysis.
+On our lower timeframe, watch for:
+- Internal Break of Structure (BOS) or ChoCH confirming direction
+- Price reactions within higher timeframe order blocks
+- FVG formations aligned with the higher timeframe bias
+- Engulfing candles or strong rejection wicks
+
+### Algorithmical implemenation of SMC
+1) Data Acquisition
+Gather historical price data with OHLCV (Open, High, Low, Close, Volume) information. Use reliable APIs or data providers to access real-time and historical market data.
+
+2) Identify Key Levels in high timeframe
+
+- Develop algorithms to spot swing highs and lows, vital for defining market structure.
+- Detect support/resistance levels based on price action, order flow, and possibly moving averages.
+- Identify psychological levels (round numbers) that often serve as interest areas for traders.
+
+3) Recognize SMC Patterns
+
+- Order Blocks: Code detection logic using candlestick patterns (e.g., engulfing bars), volume spikes, and price consolidation before breakouts.
+- Fair Value Gaps: Programmatically scan for rapid price movements that create visible gaps between candles.
+- Liquidity Grabs: Look for sudden spikes near key levels and false breakouts. Indicators like RSI or Bollinger Bands can help.
+- Breaker Blocks: Identify failed order blocks and changes in market structure, using BOS and ChoCH concepts.
+- Mitigation Blocks: Analyze price retracements and consolidation after breakouts, possibly with Fibonacci retracement levels.
+
+4) Incorporate Order Flow Analysis
+- Integrate real-time order flow data to confirm institutional activity at identified SMC zones.
+- Monitor order book depth, trade volume, and bid-ask spreads for early signals of potential liquidity grabs or major institutional entries.
