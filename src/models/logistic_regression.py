@@ -14,17 +14,18 @@ from datetime import datetime
 import time
 from ML_interface import Model
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 
 class LogisticRegressionModel(Model):
-    def __init__(self, symbol: str, max_iter: int, random_state: int, results_path=None):
+    def __init__(self, symbol: str, timeframe: str, max_iter: int, random_state: int, results_path=None):
         self.symbol = symbol
-        self.model = LogisticRegression(max_iter=max_iter, random_state=random_state, class_weight='balanced')
-        # default: <project>/results/logistic_regression.json, wherever the code is run from
+        self.timeframe = timeframe
+        self.model = LogisticRegression(max_iter=max_iter, random_state=random_state, solver='lbfgs')
         project_dir = pathlib.Path(__file__).resolve().parents[2]
-        self.results_path = pathlib.Path(results_path) if results_path else project_dir / "results" / "logistic_regression.json"
+        self.results_path = pathlib.Path(results_path) if results_path else project_dir / "results" / f"logistic_regression_{symbol}_{timeframe}.json"
         self.train_time = 0.0
         self.features = []
         self.n_train = 0
@@ -39,12 +40,23 @@ class LogisticRegressionModel(Model):
         self.y_pred = pd.DataFrame()
 
     def feature_engineering(self, train_data, test_data):
-        features = train_data.columns
-        self.features = [c for c in features if c not in ("time", "candle_type", "open", "high", "low", "sma_60")]
-        self.X_train = train_data[self.features].iloc[:-1]
-        self.y_train = train_data["candle_type"].shift(-1).iloc[:-1]     # colour of the NEXT candle
-        self.X_test = test_data[self.features].iloc[:-1]
-        self.y_test = test_data["candle_type"].shift(-1).iloc[:-1]
+        self.features = ["time", "close", "cci"]
+
+        def prepare(data):
+            data = data.copy()
+            data["signal"] = 0.0
+            sell = (data["cci"].shift(1) > 100)
+            buy = (data["cci"].shift(1) < -100)
+            data.loc[sell, "signal"] = -1
+            data.loc[buy, "signal"] = 1
+            data["next_signal"] = data["signal"].shift(-1)
+            data = data.dropna(subset=["next_signal"])
+            return data[self.features], data["next_signal"]
+
+        self.X_train, self.y_train = prepare(train_data)
+        self.X_test, self.y_test = prepare(test_data)
+        self.X_train = self.X_train.set_index("time")
+        self.X_test = self.X_test.set_index("time")
 
     def train(self):
         self.features = list(self.X_train.columns)
@@ -67,6 +79,7 @@ class LogisticRegressionModel(Model):
             "symbol": self.symbol,
             "time": datetime.now().isoformat(timespec="seconds"),
             "model": "LogisticRegression",
+            "timeframe": self.timeframe,
             "params": {"max_iter": self.model.max_iter, "random_state": self.model.random_state, "class_weight": self.model.class_weight},
             "features": self.features,
             "n_features": len(self.features),
