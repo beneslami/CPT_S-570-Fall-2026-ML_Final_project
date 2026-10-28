@@ -1,0 +1,7 @@
+*.zip
+*.zip.[0-9]*
+*.7z
+*.7z.[0-9]*
+datapoints/
+datapoints_indicators/*
+datapoints_indicators/_indicator_manifest.json
