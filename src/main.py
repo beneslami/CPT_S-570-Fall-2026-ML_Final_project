@@ -2,6 +2,7 @@ import argparse
 from data import Data
 import pathlib
 from ML_interface import Model, ML
+from models.LSTMModel import LSTMModel
 from models.logistic_regression import LogisticRegressionModel
 from models.RNNGRU import RNNGRU
 
@@ -14,7 +15,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--symbol", type=str, help="BTC, XAU, etc.")
     parser.add_argument("--timeframe", type=str, default="1h", help="Timeframe: (1m, 5m, 15m, 30m, 1h, 4h)") 
-    parser.add_argument("--model", choices=["logistic", "gru"], default="gru")
+    parser.add_argument("--lookback", type=int, default=10, help="Number of completed candles in each LSTM input sequence")
+    parser.add_argument("--model", choices=["logistic", "gru", "lstm"], default="logistic")
     args = parser.parse_args()
     symbol = args.symbol
     timeframe = args.timeframe
@@ -30,10 +32,11 @@ def main():
     
     ## 2- Model initialization
     if args.model == "gru":
-            backend: Model = RNNGRU(args.symbol, timeframe=args.timeframe, random_state=42)
+        backend: Model = RNNGRU(args.symbol, timeframe=args.timeframe, random_state=42)
+    elif args.model == "logistic":
+        backend = LogisticRegressionModel(args.symbol, timeframe=args.timeframe, max_iter=100000, random_state=42)
     else:
-        backend = LogisticRegressionModel(
-            args.symbol, timeframe=args.timeframe, max_iter=100000, random_state=42)
+        backend = LSTMModel(symbol, timeframe=timeframe, lookback=args.lookback, confidence_threshold=0.5)
 
     ml = ML(backend)  # front end: only knows the Model interface
 

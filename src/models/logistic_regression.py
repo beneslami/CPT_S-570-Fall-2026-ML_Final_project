@@ -1,11 +1,5 @@
 """
 Developed by Benyamin Eslami.
-
-The idea of this learning model is to predict the color of the next candle based on historical features of the CURRENT candle.
-It is suitable to train this model for 1-hour and 4-hour timeframes.
-
-It takes current candle's features such as close, volume, volume_delta, SMA_10, SMA_20, etc., as input to predict the color of the next candle.
-But the question is: Which set of features are most predictive of the next candle's color? 
 """
 
 import json
@@ -45,8 +39,8 @@ class LogisticRegressionModel(Model):
         def prepare(data):
             data = data.copy()
             data["signal"] = 0.0
-            sell = (data["cci"].shift(1) > 100)
-            buy = (data["cci"].shift(1) < -100)
+            sell = (data["cci"] > 100)
+            buy = (data["cci"] < -100)
             data.loc[sell, "signal"] = -1
             data.loc[buy, "signal"] = 1
             data["next_signal"] = data["signal"].shift(-1)
