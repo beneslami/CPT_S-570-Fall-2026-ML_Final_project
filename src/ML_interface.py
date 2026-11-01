@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 class Model(ABC):
 
     @abstractmethod
-    def feature_engineering(self, train_data, test_data):
+    def feature_engineering(self, train_data, test_data, **kwargs):
         pass
 
     @abstractmethod
@@ -33,8 +33,8 @@ class ML:
             raise TypeError("model must inherit from Model (src/ML_interface.py)")
         self.model = model
     
-    def feature_engineering(self, train_data, test_data):
-        return self.model.feature_engineering(train_data, test_data)
+    def feature_engineering(self, train_data, test_data, **kwargs):
+        return self.model.feature_engineering(train_data, test_data, **kwargs)
     
     def train(self):
         return self.model.train()

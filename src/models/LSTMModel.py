@@ -47,24 +47,61 @@ from ML_interface import Model
 
 
 class LSTMModel(Model):
-    def __init__(self, symbol: str, timeframe: str, results_path=None, lookback: int = 10, epochs: int = 50, batch_size: int = 64, confidence_threshold: float = 0.65, model_path: Optional[str] = None, random_seed: int = 42,):
-        if lookback < 2:
-            raise ValueError("lookback must be at least 2 candles")
+    DEFAULT_LOOKBACK_CANDIDATES = (10, 25, 50, 72, 100, 200)
+    DEFAULT_TARGET_THRESHOLD_CANDIDATES = (0.01, 0.02, 0.05)
+    DEFAULT_CONFIDENCE_THRESHOLD_CANDIDATES = (0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90)
+
+    def __init__(self, symbol: str, timeframe: str, results_path=None, lookback: int | str = "auto", target_threshold: float | str = "auto", epochs: int = 50, batch_size: int = 64, confidence_threshold: float | str = "auto", model_path: Optional[str] = None, random_seed: int = 42, lookback_candidates=None, target_threshold_candidates=None, confidence_threshold_candidates=None, min_confident_coverage: float = 0.10, multi_timeframes=("15m", "4h")):
+        if lookback != "auto" and (not isinstance(lookback, int) or lookback < 2):
+            raise ValueError("lookback must be 'auto' or an integer of at least 2 candles")
+        if target_threshold != "auto" and (
+            not isinstance(target_threshold, (int, float)) or target_threshold < 0
+        ):
+            raise ValueError("target_threshold must be 'auto' or a non-negative ATR fraction")
         if epochs < 1 or batch_size < 1:
             raise ValueError("epochs and batch_size must be positive")
-        if not 0.5 <= confidence_threshold <= 1.0:
-            raise ValueError("confidence_threshold must be between 0.5 and 1.0")
+        if confidence_threshold != "auto" and (
+            not isinstance(confidence_threshold, (int, float))
+            or not 0.5 <= confidence_threshold <= 1.0
+        ):
+            raise ValueError("confidence_threshold must be 'auto' or between 0.5 and 1.0")
+        if not 0 < min_confident_coverage <= 1:
+            raise ValueError("min_confident_coverage must be in (0, 1]")
 
         self.symbol = symbol
         self.timeframe = timeframe
-        self.lookback = lookback
+        self.lookback_mode = lookback
+        self.lookback_candidates = tuple(lookback_candidates or self.DEFAULT_LOOKBACK_CANDIDATES)
+        if not self.lookback_candidates or any(not isinstance(candidate, int) or candidate < 2 for candidate in self.lookback_candidates):
+            raise ValueError("lookback_candidates must contain integers of at least 2")
+        self.lookback = None if lookback == "auto" else lookback
+        self.target_threshold_mode = target_threshold
+        self.target_threshold_candidates = tuple(target_threshold_candidates or self.DEFAULT_TARGET_THRESHOLD_CANDIDATES)
+        if not self.target_threshold_candidates or any(
+            not isinstance(candidate, (int, float)) or candidate < 0 for candidate in self.target_threshold_candidates):
+            raise ValueError("target_threshold_candidates must contain non-negative ATR fractions")
+        self.target_threshold = (None if target_threshold == "auto" else float(target_threshold))
         self.epochs = epochs
         self.batch_size = batch_size
-        self.confidence_threshold = confidence_threshold
+        self.confidence_threshold_mode = confidence_threshold
+        self.confidence_threshold_candidates = tuple(
+            confidence_threshold_candidates or self.DEFAULT_CONFIDENCE_THRESHOLD_CANDIDATES
+        )
+        if not self.confidence_threshold_candidates or any(
+            not isinstance(candidate, (int, float)) or not 0.5 <= candidate <= 1.0
+            for candidate in self.confidence_threshold_candidates
+        ):
+            raise ValueError("confidence_threshold_candidates must be between 0.5 and 1.0")
+        self.confidence_threshold = (
+            None if confidence_threshold == "auto" else float(confidence_threshold)
+        )
+        self.min_confident_coverage = min_confident_coverage
         self.decision_threshold = 0.5
         self.model_path = pathlib.Path(model_path) if model_path else None
         self.random_seed = random_seed
-        self.feature_names = ["body_pct", "range_pct", "upper_wick_pct", "lower_wick_pct", "return_1", "return_3", "return_6", "return_12", "atr_pct", "macd_hist_pct", "rsi_centered", "cci_scaled", "relative_volume_10", "volume_delta_ratio",]
+        self.feature_names = ["body_pct", "cci_scaled"]#, "range_pct", "upper_wick_pct", "lower_wick_pct", "return_1", "return_3", "return_6", "return_12", "atr_pct", "macd_hist_pct", "rsi_centered", "relative_volume_10", "volume_delta_ratio",]
+        self.primary_feature_names = list(self.feature_names)
+        self.multi_timeframes = tuple(multi_timeframes)
 
         project_dir = pathlib.Path(__file__).resolve().parents[2]
         self.results_path = (pathlib.Path(results_path) if results_path else project_dir / "results" / f"lstm_{symbol}_{timeframe}.json")
@@ -88,6 +125,9 @@ class LSTMModel(Model):
         self.test_current_close = None
         self.test_actual_next_close = None
         self.test_predicted_next_close = None
+        self.lookback_trials = []
+        self.target_threshold_trials = []
+        self._train_frame = self._validation_frame = self._test_frame = None
         np.random.seed(self.random_seed)
 
     def _validate_frame(self, data: pd.DataFrame, name: str):
@@ -101,7 +141,7 @@ class LSTMModel(Model):
         if not times.is_monotonic_increasing or times.duplicated().any():
             raise ValueError(f"{name} must have unique, increasing timestamps")
 
-    def _numeric_features(self, data):
+    def _base_numeric_features(self, data):
         open_price = pd.to_numeric(data["open"], errors="coerce")
         high = pd.to_numeric(data["high"], errors="coerce")
         low = pd.to_numeric(data["low"], errors="coerce")
@@ -112,7 +152,8 @@ class LSTMModel(Model):
         features = pd.DataFrame(index=data.index)
 
         features["body_pct"] = (close - open_price) / open_price
-        features["range_pct"] = (high - low) / open_price
+        features["cci_scaled"] = (pd.to_numeric(data["cci"], errors="coerce").clip(-300, 300) / 100)
+        """features["range_pct"] = (high - low) / open_price
         features["upper_wick_pct"] = (high - np.maximum(open_price, close)) / open_price
         features["lower_wick_pct"] = (np.minimum(open_price, close) - low) / open_price
 
@@ -124,7 +165,7 @@ class LSTMModel(Model):
         features["atr_pct"] = atr / close
         features["macd_hist_pct"] = (pd.to_numeric(data["macd_histogram"], errors="coerce") / close)
         features["rsi_centered"] = (pd.to_numeric(data["rsi_14"], errors="coerce") - 50) / 50
-        features["cci_scaled"] = (pd.to_numeric(data["cci"], errors="coerce").clip(-300, 300) / 100)
+        """
         if "relative_volume_10" in data.columns:
             features["relative_volume_10"] = pd.to_numeric(data["relative_volume_10"], errors="coerce")
         else:
@@ -132,14 +173,75 @@ class LSTMModel(Model):
             features["relative_volume_10"] = (volume / volume_average_10.replace(0, np.nan))
         features["volume_delta_ratio"] = (pd.to_numeric(data["volume_delta"], errors="coerce") / volume.replace(0, np.nan))
 
+        features = features.replace([np.inf, -np.inf], np.nan)
+        return features
+
+    def _numeric_features(self, data):
+        """Return the selected primary and causally aligned auxiliary features."""
+        primary_features = self._base_numeric_features(data)
+        features = pd.DataFrame(index=data.index)
+        missing_features = []
+        for feature_name in self.feature_names:
+            if feature_name in primary_features:
+                features[feature_name] = primary_features[feature_name]
+            elif feature_name in data.columns:
+                features[feature_name] = pd.to_numeric(data[feature_name], errors="coerce")
+            else:
+                missing_features.append(feature_name)
+        if missing_features:
+            raise ValueError(
+                f"Selected features are not computed or aligned: {sorted(missing_features)}"
+            )
         return features.replace([np.inf, -np.inf], np.nan)
+
+    def _align_auxiliary_features(self, primary_data, auxiliary_data):
+        """Attach only auxiliary candles completed by the primary candle close.
+
+        Dataset timestamps mark candle *opens*.  A 4h row stamped 00:00 is not
+        known at 01:00, 02:00, or 03:00; it becomes usable only at 04:00.  The
+        as-of join therefore aligns auxiliary close times to primary close times.
+        """
+        aligned = primary_data.copy()
+        aligned["time"] = pd.to_datetime(aligned["time"], utc=True)
+        primary_duration = pd.Timedelta(self.timeframe)
+        aligned["primary_close_time"] = aligned["time"] + primary_duration
+        aligned = aligned.sort_values("time").reset_index(drop=True)
+        self.feature_names = list(self.primary_feature_names)
+        for timeframe in self.multi_timeframes:
+            if timeframe not in auxiliary_data:
+                raise ValueError(f"Missing auxiliary data for timeframe {timeframe}")
+            auxiliary = auxiliary_data[timeframe].copy()
+            self._validate_frame(auxiliary, f"auxiliary_data[{timeframe}]")
+            auxiliary["time"] = pd.to_datetime(auxiliary["time"], utc=True)
+            auxiliary_close_time = auxiliary["time"] + pd.Timedelta(timeframe)
+            auxiliary_features = self._base_numeric_features(auxiliary)
+            missing = set(self.primary_feature_names).difference(auxiliary_features.columns)
+            if missing:
+                raise ValueError(
+                    f"Auxiliary timeframe {timeframe} cannot compute: {sorted(missing)}"
+                )
+            prefix = f"{timeframe}_"
+            right = pd.DataFrame({"auxiliary_close_time": auxiliary_close_time})
+            for feature_name in self.primary_feature_names:
+                column_name = f"{prefix}{feature_name}"
+                right[column_name] = auxiliary_features[feature_name].to_numpy()
+                self.feature_names.append(column_name)
+            aligned = pd.merge_asof(
+                aligned,
+                right.sort_values("auxiliary_close_time"),
+                left_on="primary_close_time",
+                right_on="auxiliary_close_time",
+                direction="backward",
+                allow_exact_matches=True,
+            ).drop(columns="auxiliary_close_time")
+        return aligned.drop(columns="primary_close_time")
 
     def _make_sequences(self, data: pd.DataFrame, fit_scaler: bool):
         """End each sequence at candle t and label it from candle t+1."""
         features = self._numeric_features(data)
         next_body = (pd.to_numeric(data["close"], errors="coerce").shift(-1) - pd.to_numeric(data["open"], errors="coerce").shift(-1))
         current_atr = pd.to_numeric(data["atr_14"], errors="coerce")
-        minimum_move = 0.10 * current_atr
+        minimum_move = self.target_threshold * current_atr
         labels = pd.Series(np.nan, index=data.index)
         labels.loc[next_body > minimum_move] = 1
         labels.loc[next_body < -minimum_move] = 0
@@ -172,18 +274,10 @@ class LSTMModel(Model):
 
     @staticmethod
     def _aligned_closes(data: pd.DataFrame, sequence_times):
-        prices = pd.DataFrame(
-            {
-                "time": pd.to_datetime(data["time"], utc=True),
-                "close": pd.to_numeric(data["close"], errors="coerce"),
-            }
-        ).set_index("time")
+        prices = pd.DataFrame({"time": pd.to_datetime(data["time"], utc=True), "close": pd.to_numeric(data["close"], errors="coerce"),}).set_index("time")
         prices["next_close"] = prices["close"].shift(-1)
         aligned = prices.reindex(sequence_times)
-        return (
-            aligned["close"].to_numpy(dtype=float),
-            aligned["next_close"].to_numpy(dtype=float),
-        )
+        return (aligned["close"].to_numpy(dtype=float), aligned["next_close"].to_numpy(dtype=float),)
 
     def _build_model(self):
         keras.utils.set_random_seed(self.random_seed)
@@ -191,9 +285,33 @@ class LSTMModel(Model):
         model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"],)
         return model
 
-    def feature_engineering(self, train_data, test_data):
+    def _prepare_sequences(self):
+        """Build one candidate's sequences after ``self.lookback`` is set."""
+        self.scaler = StandardScaler()
+        (self.X_train, self.y_train, self.train_times, self.train_target_coverage,) = self._make_sequences(self._train_frame, fit_scaler=True)
+        (self.X_validation, self.y_validation, self.validation_times, self.validation_target_coverage,) = self._make_sequences(self._validation_frame, fit_scaler=False)
+        (self.X_test, self.y_test, self.test_times, self.test_target_coverage,) = self._make_sequences(self._test_frame, fit_scaler=False)
+
+        train_current_close, train_actual_next_close = self._aligned_closes(self._train_frame, self.train_times,)
+        train_abs_return = np.abs(train_actual_next_close / train_current_close - 1.0)
+        self.typical_abs_return = float(np.nanmedian(train_abs_return))
+        self.test_current_close, self.test_actual_next_close = (self._aligned_closes(self._test_frame, self.test_times))
+
+        if min(len(self.X_train), len(self.X_validation), len(self.X_test)) < 20:
+            raise ValueError("Need at least 20 complete sequences in each split")
+        if len(np.unique(self.y_train)) != 2 or len(np.unique(self.y_validation)) != 2:
+            raise ValueError("Training and validation sequences must each contain bullish and bearish labels")
+        self.model = self._build_model()
+
+    def feature_engineering(self, train_data, test_data, auxiliary_data=None):
         self._validate_frame(train_data, "train_data")
         self._validate_frame(test_data, "test_data")
+        auxiliary_data = auxiliary_data or {}
+        if self.multi_timeframes:
+            train_data = self._align_auxiliary_features(train_data, auxiliary_data)
+            test_data = self._align_auxiliary_features(test_data, auxiliary_data)
+        else:
+            self.feature_names = list(self.primary_feature_names)
 
         if train_data.equals(test_data):
             test_start = int(len(train_data) * 0.8)
@@ -213,32 +331,15 @@ class LSTMModel(Model):
         train_frame = train_and_validation.iloc[:validation_start].copy()
         validation_frame = train_and_validation.iloc[validation_start:].copy()
 
-        (self.X_train, self.y_train, self.train_times, self.train_target_coverage,) = self._make_sequences(train_frame, fit_scaler=True)
-        (self.X_validation, self.y_validation, self.validation_times, self.validation_target_coverage,) = self._make_sequences(validation_frame, fit_scaler=False)
-        (self.X_test, self.y_test, self.test_times, self.test_target_coverage,) = self._make_sequences(test_frame, fit_scaler=False)
+        self._train_frame = train_frame
+        self._validation_frame = validation_frame
+        self._test_frame = test_frame
+        # Fixed hyperparameters preserve the former one-model behaviour. In auto
+        # mode, train() builds candidates but does not score test data to select one.
+        if self.lookback is not None and self.target_threshold is not None:
+            self._prepare_sequences()
 
-        train_current_close, train_actual_next_close = self._aligned_closes(
-            train_frame,
-            self.train_times,
-        )
-        train_abs_return = np.abs(
-            train_actual_next_close / train_current_close - 1.0
-        )
-        self.typical_abs_return = float(np.nanmedian(train_abs_return))
-        self.test_current_close, self.test_actual_next_close = (
-            self._aligned_closes(test_frame, self.test_times)
-        )
-
-        if min(len(self.X_train), len(self.X_validation), len(self.X_test)) < 20:
-            raise ValueError("Need at least 20 complete sequences in each split")
-        if len(np.unique(self.y_train)) != 2 or len(np.unique(self.y_validation)) != 2:
-            raise ValueError("Training and validation sequences must each contain bullish and bearish labels")
-        self.model = self._build_model()
-
-    def train(self):
-        if self.model is None or self.X_train is None:
-            raise RuntimeError("Run feature_engineering before train")
-
+    def _train_current_lookback(self):
         early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True,)
         started = time.time()
         self.history = self.model.fit(self.X_train, self.y_train, validation_data=(self.X_validation, self.y_validation), epochs=self.epochs, batch_size=self.batch_size, shuffle=False, callbacks=[early_stopping], verbose=1,)
@@ -252,6 +353,118 @@ class LSTMModel(Model):
 
         self.training_accuracy = float(accuracy_score(self.y_train, train_probability >= self.decision_threshold,))
         self.validation_accuracy = float(accuracy_score(self.y_validation, validation_probability >= self.decision_threshold,))
+        validation_loss = float(log_loss(self.y_validation, validation_probability, labels=[0, 1]))
+        validation_balanced_accuracy = float(balanced_accuracy_score(self.y_validation, validation_probability >= self.decision_threshold,))
+        validation_prediction = (validation_probability >= self.decision_threshold).astype(int)
+        validation_confidence = np.where(
+            validation_prediction == 1,
+            validation_probability,
+            1.0 - validation_probability,
+        )
+        candidates = (
+            self.confidence_threshold_candidates
+            if self.confidence_threshold_mode == "auto"
+            else (self.confidence_threshold,)
+        )
+        best_confidence_score = None
+        for threshold in candidates:
+            confident = validation_confidence >= threshold
+            coverage = float(confident.mean())
+            if coverage < self.min_confident_coverage:
+                continue
+            selective_accuracy = float(
+                accuracy_score(self.y_validation[confident], validation_prediction[confident])
+            )
+            score = (-selective_accuracy, -coverage)
+            if best_confidence_score is None or score < best_confidence_score:
+                best_confidence_score = score
+                self.confidence_threshold = float(threshold)
+                selected_coverage = coverage
+                selected_accuracy = selective_accuracy
+        if best_confidence_score is None:
+            raise ValueError("No confidence threshold meets min_confident_coverage")
+        return (
+            validation_loss,
+            validation_balanced_accuracy,
+            selected_coverage,
+            selected_accuracy,
+        )
+
+    def train(self):
+        if self._train_frame is None:
+            raise RuntimeError("Run feature_engineering before train")
+
+        lookback_candidates = (self.lookback_candidates if self.lookback_mode == "auto" else (self.lookback,) )
+        target_threshold_candidates = (self.target_threshold_candidates if self.target_threshold_mode == "auto" else (self.target_threshold,))
+        self.lookback_trials = []
+        self.target_threshold_trials = self.lookback_trials
+        best_state = None
+        best_score = None
+        for target_threshold in target_threshold_candidates:
+            for lookback in lookback_candidates:
+                self.target_threshold = float(target_threshold)
+                self.lookback = lookback
+                self._prepare_sequences()
+                (validation_loss, validation_balanced_accuracy,
+                 validation_confident_coverage, validation_confident_accuracy) = self._train_current_lookback()
+                coverage_adjusted_balanced_accuracy = (validation_balanced_accuracy * self.validation_target_coverage)
+                trial = {
+                    "target_threshold_atr_fraction": self.target_threshold,
+                    "lookback": lookback,
+                    "n_train": len(self.X_train),
+                    "n_validation": len(self.X_validation),
+                    "train_target_coverage": self.train_target_coverage,
+                    "validation_target_coverage": self.validation_target_coverage,
+                    "training_acc": self.training_accuracy,
+                    "training_error": 1.0 - self.training_accuracy,
+                    "validation_acc": self.validation_accuracy,
+                    "validation_error": 1.0 - self.validation_accuracy,
+                    "validation_balanced_acc": validation_balanced_accuracy,
+                    "coverage_adjusted_validation_balanced_acc": coverage_adjusted_balanced_accuracy,
+                    "validation_log_loss": validation_loss,
+                    "confidence_threshold": self.confidence_threshold,
+                    "validation_confident_coverage": validation_confident_coverage,
+                    "validation_confident_accuracy": validation_confident_accuracy,
+                    "epochs_trained": len(self.history.history["loss"]),
+                    "train_time": self.train_time,
+                }
+                self.lookback_trials.append(trial)
+                # Target thresholds alter sample coverage.  Select the pair by
+                # coverage-adjusted validation balanced accuracy so a high cutoff
+                # cannot win merely by omitting difficult candles; log loss breaks ties.
+                score = (-coverage_adjusted_balanced_accuracy, validation_loss)
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best_state = {
+                        "model": self.model,
+                        "scaler": self.scaler,
+                        "history": self.history,
+                        "lookback": self.lookback,
+                        "target_threshold": self.target_threshold,
+                        "decision_threshold": self.decision_threshold,
+                        "confidence_threshold": self.confidence_threshold,
+                        "training_accuracy": self.training_accuracy,
+                        "validation_accuracy": self.validation_accuracy,
+                        "train_time": self.train_time,
+                        "X_train": self.X_train,
+                        "y_train": self.y_train,
+                        "train_times": self.train_times,
+                        "train_target_coverage": self.train_target_coverage,
+                        "X_validation": self.X_validation,
+                        "y_validation": self.y_validation,
+                        "validation_times": self.validation_times,
+                        "validation_target_coverage": self.validation_target_coverage,
+                        "X_test": self.X_test,
+                        "y_test": self.y_test,
+                        "test_times": self.test_times,
+                        "test_target_coverage": self.test_target_coverage,
+                        "typical_abs_return": self.typical_abs_return,
+                        "test_current_close": self.test_current_close,
+                        "test_actual_next_close": self.test_actual_next_close,
+                    }
+
+        for name, value in best_state.items():
+            setattr(self, name, value)
         if self.model_path is not None:
             self.model_path.parent.mkdir(parents=True, exist_ok=True)
             self.model.save(self.model_path)
@@ -265,11 +478,15 @@ class LSTMModel(Model):
         self.test_accuracy = float(accuracy_score(self.y_test, self.y_prediction))
         return self.test_accuracy
 
-    def predict_next(self, recent_data: pd.DataFrame) -> dict:
+    def predict_next(self, recent_data: pd.DataFrame, auxiliary_data=None) -> dict:
         """Predict the candle immediately after the final completed input candle."""
         if self.model is None or self.history is None:
             raise RuntimeError("Train the model before predicting")
         self._validate_frame(recent_data, "recent_data")
+        if self.multi_timeframes:
+            recent_data = self._align_auxiliary_features(
+                recent_data, auxiliary_data or {}
+            )
         features = self._numeric_features(recent_data).tail(self.lookback)
         if len(features) != self.lookback or features.isna().any().any():
             raise ValueError(f"Need {self.lookback} complete recent candles for prediction")
@@ -302,12 +519,13 @@ class LSTMModel(Model):
             raise RuntimeError("Training price movement is unavailable")
 
         predicted_direction = np.where(self.y_prediction == 1, 1.0, -1.0)
-        self.test_predicted_next_close = self.test_current_close * (
-            1.0 + predicted_direction * self.typical_abs_return
-        )
+        self.test_predicted_next_close = self.test_current_close * (1.0 + predicted_direction * self.typical_abs_return)
 
+        feature_tag = "-".join(self.feature_names)
+        target_tag = f"{self.target_threshold * 100:g}".replace(".", "p")
         plot_path = self.results_path.with_name(
-            f"{self.results_path.stem}_prediction_comparison.png"
+            f"{self.results_path.stem}_selected_lb{self.lookback}_"
+            f"atr{target_tag}pct_features-{feature_tag}_prediction_comparison.png"
         )
         plot_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -320,22 +538,9 @@ class LSTMModel(Model):
         predicted_prices = self.test_predicted_next_close[first:]
 
         figure, axis = plt.subplots(figsize=(14, 7))
-        axis.plot(
-            plot_times,
-            actual_prices,
-            label="Actual next-candle close",
-            linewidth=1.8,
-        )
-        axis.plot(
-            plot_times,
-            predicted_prices,
-            label="Direction-implied next-candle close",
-            linewidth=1.3,
-            alpha=0.85,
-        )
-        axis.set_title(
-            f"{self.symbol} {self.timeframe}: actual vs predicted direction-implied price"
-        )
+        axis.plot(plot_times, actual_prices, label="Actual next-candle close", linewidth=1.8, )
+        axis.plot(plot_times, predicted_prices, label="Direction-implied next-candle close", linewidth=1.3, alpha=0.85,)
+        axis.set_title(f"{self.symbol} {self.timeframe}: actual vs predicted direction-implied price")
         axis.set_xlabel("Feature window end time")
         axis.set_ylabel("Price")
         axis.grid(alpha=0.25)
@@ -358,12 +563,27 @@ class LSTMModel(Model):
             "model": "LSTM",
             "timeframe": self.timeframe,
             "target": (
-                "next candle body > 10% of current ATR: bullish; "
-                "next candle body < -10% of current ATR: bearish; "
+                f"next candle body > {self.target_threshold:.0%} of current ATR: bullish; "
+                f"next candle body < -{self.target_threshold:.0%} of current ATR: bearish; "
                 "smaller moves omitted"
             ),
+            "target_threshold_atr_fraction": self.target_threshold,
+            "target_threshold_mode": self.target_threshold_mode,
+            "target_threshold_candidates": list(self.target_threshold_candidates),
+            "multi_timeframes": list(self.multi_timeframes),
             "split_method": self.split_method,
             "lookback": self.lookback,
+            "lookback_mode": self.lookback_mode,
+            "hyperparameter_selection_metric": (
+                "maximum coverage-adjusted validation balanced accuracy; "
+                "validation log loss breaks ties"
+            ),
+            "lookback_candidates": list(self.lookback_candidates),
+            "lookback_candidates_evaluated": sorted({trial["lookback"] for trial in self.lookback_trials}),
+            "target_threshold_candidates_evaluated": sorted(
+                {trial["target_threshold_atr_fraction"] for trial in self.lookback_trials}
+            ),
+            "hyperparameter_trials": self.lookback_trials,
             "features": self.feature_names,
             "n_features": len(self.feature_names),
             "train_period": [str(self.train_times[0]), str(self.train_times[-1])],
@@ -380,8 +600,11 @@ class LSTMModel(Model):
             "batch_size": self.batch_size,
             "train_time": self.train_time,
             "training_acc": self.training_accuracy,
+            "training_error": 1.0 - self.training_accuracy,
             "validation_acc": self.validation_accuracy,
+            "validation_error": 1.0 - self.validation_accuracy,
             "test_acc": self.test_accuracy,
+            "test_error": 1.0 - self.test_accuracy,
             "majority_baseline_acc": float(max(np.mean(self.y_test == 0), np.mean(self.y_test == 1))),
             "test_balanced_acc": float(balanced_accuracy_score(self.y_test, self.y_prediction)),
             "test_macro_f1": float(f1_score(self.y_test, self.y_prediction, average="macro")),
@@ -397,7 +620,10 @@ class LSTMModel(Model):
             "confusion_matrix": confusion_matrix(self.y_test, self.y_prediction, labels=[0, 1]).tolist(),
             "classification_report": classification_report(self.y_test, self.y_prediction, labels=[0, 1], target_names=["bearish", "bullish"], output_dict=True, zero_division=0,),
             "decision_threshold": self.decision_threshold,
+            "confidence_threshold_mode": self.confidence_threshold_mode,
             "confidence_threshold": self.confidence_threshold,
+            "confidence_threshold_candidates": list(self.confidence_threshold_candidates),
+            "min_confident_coverage": self.min_confident_coverage,
             "n_confident": int(confident.sum()),
             "confident_coverage": float(confident.mean()),
             "confident_accuracy": (float(accuracy_score(self.y_test[confident], self.y_prediction[confident])) if confident.any() else None),
