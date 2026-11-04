@@ -1,0 +1,4 @@
+*.zip
+/datapoints_indicators/
+/datapoints_preprocessed/
+/datapoints
