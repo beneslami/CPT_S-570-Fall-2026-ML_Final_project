@@ -67,3 +67,38 @@ $SL = 1 \times ATR(t)$ and $TP = \alpha \times SL$.
 6- We train our model and calculate $P$. As we already defined SL and $\alpha$, we put the numbers in the formula:
 $$\text{expectancy}_{\text{net}} = (1+\alpha)(p - p_0) - \frac{c}{SL}$$
 and the sign tells you whether it’s profitable: above 0 makes money, below 0 loses. The size tells you how much per trade, in units of R. There’s one condition, and it’s what “$p$ must come from the same TP and SL” means: the 60% has to be measured in exactly the way the formula assumes.
+
+At this point, one might ask: Where does ML sit? it supplies $p$. Everything else in the formula is arithmetic or settings we choose, and $(p - p_0)$ is the only part that can make money. 
+
+$$E_{net} = (1+\alpha)\,(\underbrace{p}_{\text{ML}} - \underbrace{p_0}_{\text{set by }\alpha}) - \underbrace{c}_{\text{broker}}/\underbrace{SL}_{\text{us}}$$
+
+If you open a trade at every candle with no model, your win rate is simply the no-model rate: $p = p_0$. Then
+
+$$E_{net} = (1+\alpha)(p_0 - p_0) - \frac{c}{SL} = -\frac{c}{SL}$$
+
+For each candle t, the model sees the features known at that moment (body, CCI, ATR, multi-timeframe data…) and learns to estimate:
+
+$$q_t = P(\text{TP is hit before SL} \mid \text{what the market looks like at } t)$$
+
+That’s a conditional probability: “given these conditions, how likely is this trade to win?” If the features carry information, $q_t$ varies: 0.62 in some situations, 0.41 in others. If they don’t, $q_t$ stays at $p_0$ for every candle. Apply the formula to a single candle, with the model’s $q_t$ in place of $p$. A trade is worth taking only if its own expected result is positive:
+
+$$
+(1+\alpha)\,q_t - 1 - \frac{c}{SL} > 0
+\quad\Longleftrightarrow\quad
+q_t > p_0 + \frac{c/SL}{1+\alpha}
+$$
+
+That’s the decision threshold, and it comes straight from the formula. Example: α = 1 and $c/SL = 0.079$ (BTC 4h): $q_t > 0.50 + \frac{0.079}{2} = 0.54$. So you trade only on candles where the model says the win chance is above 54%, and skip the rest. The trades you actually take then have an average win rate $p$ above $p_0$. ML turns “trade everything at $p_0$” into “trade only where $q_t$ is high”, so $p > p_0$.
+
+What ML can and can’t do
+
+It can:
+
+* find conditions where the win rate is higher than average ($q_t > p_0$)
+* trade less often but better (fewer, higher-$q_t$ trades)
+* help choose SL and α, by comparing $E_{net}$ on validation across settings
+
+It can’t:
+
+* change the relation between α and $p_0$ (that’s arithmetic)
+* create an edge when the features hold no information about the outcome. Then $q_t \approx p_0$ everywhere, no candle passes the threshold, and the correct result is “don’t trade”.
