@@ -50,20 +50,18 @@ class LSTMModel(Model):
     DEFAULT_LOOKBACK_CANDIDATES = (10, 25, 50, 72, 100, 200)
     DEFAULT_TARGET_THRESHOLD_CANDIDATES = (0.01, 0.02, 0.05)
     DEFAULT_CONFIDENCE_THRESHOLD_CANDIDATES = (0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90)
+    DEFAULT_LSTM_UNIT_CANDIDATES = (4, 8, 16, 50)
 
-    def __init__(self, symbol: str, timeframe: str, results_path=None, lookback: int | str = "auto", target_threshold: float | str = "auto", epochs: int = 50, batch_size: int = 64, confidence_threshold: float | str = "auto", model_path: Optional[str] = None, random_seed: int = 42, lookback_candidates=None, target_threshold_candidates=None, confidence_threshold_candidates=None, min_confident_coverage: float = 0.10, multi_timeframes=("15m", "4h")):
+    def __init__(self, symbol: str, timeframe: str, results_path=None, lookback: int | str = "auto", target_threshold: float | str = "auto", lstm_units: int | str = "auto", epochs: int = 50, batch_size: int = 64, confidence_threshold: float | str = "auto", model_path: Optional[str] = None, random_seed: int = 42, lookback_candidates=None, target_threshold_candidates=None, lstm_unit_candidates=None, confidence_threshold_candidates=None, min_confident_coverage: float = 0.10, multi_timeframes=("15m", "4h")):
         if lookback != "auto" and (not isinstance(lookback, int) or lookback < 2):
             raise ValueError("lookback must be 'auto' or an integer of at least 2 candles")
-        if target_threshold != "auto" and (
-            not isinstance(target_threshold, (int, float)) or target_threshold < 0
-        ):
+        if target_threshold != "auto" and (not isinstance(target_threshold, (int, float)) or target_threshold < 0):
             raise ValueError("target_threshold must be 'auto' or a non-negative ATR fraction")
+        if lstm_units != "auto" and (not isinstance(lstm_units, int) or lstm_units < 1):
+            raise ValueError("lstm_units must be 'auto' or a positive integer")
         if epochs < 1 or batch_size < 1:
             raise ValueError("epochs and batch_size must be positive")
-        if confidence_threshold != "auto" and (
-            not isinstance(confidence_threshold, (int, float))
-            or not 0.5 <= confidence_threshold <= 1.0
-        ):
+        if confidence_threshold != "auto" and (not isinstance(confidence_threshold, (int, float)) or not 0.5 <= confidence_threshold <= 1.0):
             raise ValueError("confidence_threshold must be 'auto' or between 0.5 and 1.0")
         if not 0 < min_confident_coverage <= 1:
             raise ValueError("min_confident_coverage must be in (0, 1]")
@@ -77,24 +75,21 @@ class LSTMModel(Model):
         self.lookback = None if lookback == "auto" else lookback
         self.target_threshold_mode = target_threshold
         self.target_threshold_candidates = tuple(target_threshold_candidates or self.DEFAULT_TARGET_THRESHOLD_CANDIDATES)
-        if not self.target_threshold_candidates or any(
-            not isinstance(candidate, (int, float)) or candidate < 0 for candidate in self.target_threshold_candidates):
+        if not self.target_threshold_candidates or any(not isinstance(candidate, (int, float)) or candidate < 0 for candidate in self.target_threshold_candidates):
             raise ValueError("target_threshold_candidates must contain non-negative ATR fractions")
         self.target_threshold = (None if target_threshold == "auto" else float(target_threshold))
+        self.lstm_units_mode = lstm_units
+        self.lstm_unit_candidates = tuple(lstm_unit_candidates or self.DEFAULT_LSTM_UNIT_CANDIDATES)
+        if not self.lstm_unit_candidates or any(not isinstance(candidate, int) or candidate < 1 for candidate in self.lstm_unit_candidates):
+            raise ValueError("lstm_unit_candidates must contain positive integers")
+        self.lstm_units = None if lstm_units == "auto" else lstm_units
         self.epochs = epochs
         self.batch_size = batch_size
         self.confidence_threshold_mode = confidence_threshold
-        self.confidence_threshold_candidates = tuple(
-            confidence_threshold_candidates or self.DEFAULT_CONFIDENCE_THRESHOLD_CANDIDATES
-        )
-        if not self.confidence_threshold_candidates or any(
-            not isinstance(candidate, (int, float)) or not 0.5 <= candidate <= 1.0
-            for candidate in self.confidence_threshold_candidates
-        ):
+        self.confidence_threshold_candidates = tuple(confidence_threshold_candidates or self.DEFAULT_CONFIDENCE_THRESHOLD_CANDIDATES)
+        if not self.confidence_threshold_candidates or any(not isinstance(candidate, (int, float)) or not 0.5 <= candidate <= 1.0 for candidate in self.confidence_threshold_candidates):
             raise ValueError("confidence_threshold_candidates must be between 0.5 and 1.0")
-        self.confidence_threshold = (
-            None if confidence_threshold == "auto" else float(confidence_threshold)
-        )
+        self.confidence_threshold = (None if confidence_threshold == "auto" else float(confidence_threshold))
         self.min_confident_coverage = min_confident_coverage
         self.decision_threshold = 0.5
         self.model_path = pathlib.Path(model_path) if model_path else None
@@ -147,11 +142,27 @@ class LSTMModel(Model):
         low = pd.to_numeric(data["low"], errors="coerce")
         close = pd.to_numeric(data["close"], errors="coerce")
         volume = pd.to_numeric(data["volume"], errors="coerce")
+        volume_delta = pd.to_numeric(data["volume_delta"], errors="coerce")
         atr = pd.to_numeric(data["atr_14"], errors="coerce")
+        macd_histogram = pd.to_numeric(data["macd_histogram"], errors="coerce")
 
         features = pd.DataFrame(index=data.index)
 
         features["body_pct"] = (close - open_price) / open_price
+        features["range_pct"] = (high - low) / open_price
+        candle_range = (high - low).replace(0, np.nan)
+        upper_wick = high - np.maximum(open_price, close)
+        lower_wick = np.minimum(open_price, close) - low
+        features["wick_imbalance"] = (lower_wick - upper_wick) / candle_range
+        features["atr_pct"] = atr / close.replace(0, np.nan)
+        if "relative_volume" in data.columns:
+            features["relative_volume"] = pd.to_numeric(data["relative_volume"], errors="coerce")
+        else:
+            volume_median_20 = volume.rolling(window=20, min_periods=20).median()
+            features["relative_volume"] = volume / volume_median_20.replace(0, np.nan)
+        features["relative_volume"] = features["relative_volume"].clip(lower=0, upper=10)
+        features["volume_delta_ratio"] = volume_delta / volume.replace(0, np.nan)
+        features["macd_hist_atr"] = macd_histogram / atr.replace(0, np.nan)
         features["cci_scaled"] = (pd.to_numeric(data["cci"], errors="coerce").clip(-300, 300) / 100)
         """features["range_pct"] = (high - low) / open_price
         features["upper_wick_pct"] = (high - np.maximum(open_price, close)) / open_price
@@ -166,13 +177,6 @@ class LSTMModel(Model):
         features["macd_hist_pct"] = (pd.to_numeric(data["macd_histogram"], errors="coerce") / close)
         features["rsi_centered"] = (pd.to_numeric(data["rsi_14"], errors="coerce") - 50) / 50
         """
-        if "relative_volume_10" in data.columns:
-            features["relative_volume_10"] = pd.to_numeric(data["relative_volume_10"], errors="coerce")
-        else:
-            volume_average_10 = volume.rolling(window=10, min_periods=10,).mean()
-            features["relative_volume_10"] = (volume / volume_average_10.replace(0, np.nan))
-        features["volume_delta_ratio"] = (pd.to_numeric(data["volume_delta"], errors="coerce") / volume.replace(0, np.nan))
-
         features = features.replace([np.inf, -np.inf], np.nan)
         return features
 
@@ -189,9 +193,7 @@ class LSTMModel(Model):
             else:
                 missing_features.append(feature_name)
         if missing_features:
-            raise ValueError(
-                f"Selected features are not computed or aligned: {sorted(missing_features)}"
-            )
+            raise ValueError(f"Selected features are not computed or aligned: {sorted(missing_features)}")
         return features.replace([np.inf, -np.inf], np.nan)
 
     def _align_auxiliary_features(self, primary_data, auxiliary_data):
@@ -211,30 +213,40 @@ class LSTMModel(Model):
             if timeframe not in auxiliary_data:
                 raise ValueError(f"Missing auxiliary data for timeframe {timeframe}")
             auxiliary = auxiliary_data[timeframe].copy()
-            self._validate_frame(auxiliary, f"auxiliary_data[{timeframe}]")
+            # Auxiliary frames only contribute the features configured in
+            # ``primary_feature_names``.  The current feature set needs open,
+            # close, and CCI, so do not require unrelated indicator columns.
+            # This permits memory-safe loading of the very large 1-minute file.
+            self._validate_auxiliary_frame(auxiliary, f"auxiliary_data[{timeframe}]")
             auxiliary["time"] = pd.to_datetime(auxiliary["time"], utc=True)
             auxiliary_close_time = auxiliary["time"] + pd.Timedelta(timeframe)
             auxiliary_features = self._base_numeric_features(auxiliary)
             missing = set(self.primary_feature_names).difference(auxiliary_features.columns)
             if missing:
-                raise ValueError(
-                    f"Auxiliary timeframe {timeframe} cannot compute: {sorted(missing)}"
-                )
+                raise ValueError(f"Auxiliary timeframe {timeframe} cannot compute: {sorted(missing)}")
             prefix = f"{timeframe}_"
             right = pd.DataFrame({"auxiliary_close_time": auxiliary_close_time})
             for feature_name in self.primary_feature_names:
                 column_name = f"{prefix}{feature_name}"
                 right[column_name] = auxiliary_features[feature_name].to_numpy()
                 self.feature_names.append(column_name)
-            aligned = pd.merge_asof(
-                aligned,
-                right.sort_values("auxiliary_close_time"),
-                left_on="primary_close_time",
-                right_on="auxiliary_close_time",
-                direction="backward",
-                allow_exact_matches=True,
-            ).drop(columns="auxiliary_close_time")
+            aligned = pd.merge_asof(aligned, right.sort_values("auxiliary_close_time"), left_on="primary_close_time", right_on="auxiliary_close_time", direction="backward", allow_exact_matches=True,).drop(columns="auxiliary_close_time")
         return aligned.drop(columns="primary_close_time")
+
+    @staticmethod
+    def _validate_auxiliary_frame(data: pd.DataFrame, name: str):
+        required = {
+            "time", "open", "high", "low", "close", "volume", "volume_delta",
+            "atr_14", "macd_histogram", "cci",
+        }
+        missing = required.difference(data.columns)
+        if missing:
+            raise ValueError(f"{name} is missing columns: {sorted(missing)}")
+        if data.empty:
+            raise ValueError(f"{name} is empty")
+        times = pd.to_datetime(data["time"], utc=True, errors="raise")
+        if not times.is_monotonic_increasing or times.duplicated().any():
+            raise ValueError(f"{name} must have unique, increasing timestamps")
 
     def _make_sequences(self, data: pd.DataFrame, fit_scaler: bool):
         """End each sequence at candle t and label it from candle t+1."""
@@ -281,7 +293,7 @@ class LSTMModel(Model):
 
     def _build_model(self):
         keras.utils.set_random_seed(self.random_seed)
-        model = Sequential([Input(shape=(self.lookback, len(self.feature_names))), KerasLSTM(50), Dense(10, activation="relu"), Dropout(0.20), Dense(1, activation="sigmoid"),])
+        model = Sequential([Input(shape=(self.lookback, len(self.feature_names))), KerasLSTM(self.lstm_units), Dropout(0.10), Dense(1, activation="sigmoid"), ])
         model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"],)
         return model
 
@@ -336,13 +348,13 @@ class LSTMModel(Model):
         self._test_frame = test_frame
         # Fixed hyperparameters preserve the former one-model behaviour. In auto
         # mode, train() builds candidates but does not score test data to select one.
-        if self.lookback is not None and self.target_threshold is not None:
+        if (self.lookback is not None and self.target_threshold is not None and self.lstm_units is not None):
             self._prepare_sequences()
 
     def _train_current_lookback(self):
         early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True,)
         started = time.time()
-        self.history = self.model.fit(self.X_train, self.y_train, validation_data=(self.X_validation, self.y_validation), epochs=self.epochs, batch_size=self.batch_size, shuffle=False, callbacks=[early_stopping], verbose=1,)
+        self.history = self.model.fit(self.X_train, self.y_train, validation_data=(self.X_validation, self.y_validation), epochs=self.epochs, batch_size=self.batch_size, shuffle=False, callbacks=[early_stopping], verbose=getattr(self, "training_verbose", 1),)
         self.train_time = time.time() - started
         train_probability = self.model.predict(self.X_train, batch_size=self.batch_size, verbose=0).reshape(-1)
         validation_probability = self.model.predict(self.X_validation, batch_size=self.batch_size, verbose=0).reshape(-1)
@@ -356,25 +368,15 @@ class LSTMModel(Model):
         validation_loss = float(log_loss(self.y_validation, validation_probability, labels=[0, 1]))
         validation_balanced_accuracy = float(balanced_accuracy_score(self.y_validation, validation_probability >= self.decision_threshold,))
         validation_prediction = (validation_probability >= self.decision_threshold).astype(int)
-        validation_confidence = np.where(
-            validation_prediction == 1,
-            validation_probability,
-            1.0 - validation_probability,
-        )
-        candidates = (
-            self.confidence_threshold_candidates
-            if self.confidence_threshold_mode == "auto"
-            else (self.confidence_threshold,)
-        )
+        validation_confidence = np.where(validation_prediction == 1, validation_probability, 1.0 - validation_probability,)
+        candidates = (self.confidence_threshold_candidates if self.confidence_threshold_mode == "auto" else (self.confidence_threshold,))
         best_confidence_score = None
         for threshold in candidates:
             confident = validation_confidence >= threshold
             coverage = float(confident.mean())
             if coverage < self.min_confident_coverage:
                 continue
-            selective_accuracy = float(
-                accuracy_score(self.y_validation[confident], validation_prediction[confident])
-            )
+            selective_accuracy = float(accuracy_score(self.y_validation[confident], validation_prediction[confident]))
             score = (-selective_accuracy, -coverage)
             if best_confidence_score is None or score < best_confidence_score:
                 best_confidence_score = score
@@ -383,12 +385,7 @@ class LSTMModel(Model):
                 selected_accuracy = selective_accuracy
         if best_confidence_score is None:
             raise ValueError("No confidence threshold meets min_confident_coverage")
-        return (
-            validation_loss,
-            validation_balanced_accuracy,
-            selected_coverage,
-            selected_accuracy,
-        )
+        return (validation_loss, validation_balanced_accuracy, selected_coverage, selected_accuracy,)
 
     def train(self):
         if self._train_frame is None:
@@ -396,72 +393,75 @@ class LSTMModel(Model):
 
         lookback_candidates = (self.lookback_candidates if self.lookback_mode == "auto" else (self.lookback,) )
         target_threshold_candidates = (self.target_threshold_candidates if self.target_threshold_mode == "auto" else (self.target_threshold,))
+        lstm_unit_candidates = (self.lstm_unit_candidates if self.lstm_units_mode == "auto" else (self.lstm_units,))
         self.lookback_trials = []
         self.target_threshold_trials = self.lookback_trials
         best_state = None
         best_score = None
         for target_threshold in target_threshold_candidates:
             for lookback in lookback_candidates:
-                self.target_threshold = float(target_threshold)
-                self.lookback = lookback
-                self._prepare_sequences()
-                (validation_loss, validation_balanced_accuracy,
-                 validation_confident_coverage, validation_confident_accuracy) = self._train_current_lookback()
-                coverage_adjusted_balanced_accuracy = (validation_balanced_accuracy * self.validation_target_coverage)
-                trial = {
-                    "target_threshold_atr_fraction": self.target_threshold,
-                    "lookback": lookback,
-                    "n_train": len(self.X_train),
-                    "n_validation": len(self.X_validation),
-                    "train_target_coverage": self.train_target_coverage,
-                    "validation_target_coverage": self.validation_target_coverage,
-                    "training_acc": self.training_accuracy,
-                    "training_error": 1.0 - self.training_accuracy,
-                    "validation_acc": self.validation_accuracy,
-                    "validation_error": 1.0 - self.validation_accuracy,
-                    "validation_balanced_acc": validation_balanced_accuracy,
-                    "coverage_adjusted_validation_balanced_acc": coverage_adjusted_balanced_accuracy,
-                    "validation_log_loss": validation_loss,
-                    "confidence_threshold": self.confidence_threshold,
-                    "validation_confident_coverage": validation_confident_coverage,
-                    "validation_confident_accuracy": validation_confident_accuracy,
-                    "epochs_trained": len(self.history.history["loss"]),
-                    "train_time": self.train_time,
-                }
-                self.lookback_trials.append(trial)
-                # Target thresholds alter sample coverage.  Select the pair by
-                # coverage-adjusted validation balanced accuracy so a high cutoff
-                # cannot win merely by omitting difficult candles; log loss breaks ties.
-                score = (-coverage_adjusted_balanced_accuracy, validation_loss)
-                if best_score is None or score < best_score:
-                    best_score = score
-                    best_state = {
-                        "model": self.model,
-                        "scaler": self.scaler,
-                        "history": self.history,
-                        "lookback": self.lookback,
-                        "target_threshold": self.target_threshold,
-                        "decision_threshold": self.decision_threshold,
-                        "confidence_threshold": self.confidence_threshold,
-                        "training_accuracy": self.training_accuracy,
-                        "validation_accuracy": self.validation_accuracy,
-                        "train_time": self.train_time,
-                        "X_train": self.X_train,
-                        "y_train": self.y_train,
-                        "train_times": self.train_times,
+                for lstm_units in lstm_unit_candidates:
+                    self.target_threshold = float(target_threshold)
+                    self.lookback = lookback
+                    self.lstm_units = lstm_units
+                    self._prepare_sequences()
+                    (validation_loss, validation_balanced_accuracy, validation_confident_coverage, validation_confident_accuracy) = self._train_current_lookback()
+                    coverage_adjusted_balanced_accuracy = (validation_balanced_accuracy * self.validation_target_coverage)
+                    trial = {
+                        "target_threshold_atr_fraction": self.target_threshold,
+                        "lookback": lookback,
+                        "lstm_units": self.lstm_units,
+                        "n_train": len(self.X_train),
+                        "n_validation": len(self.X_validation),
                         "train_target_coverage": self.train_target_coverage,
-                        "X_validation": self.X_validation,
-                        "y_validation": self.y_validation,
-                        "validation_times": self.validation_times,
                         "validation_target_coverage": self.validation_target_coverage,
-                        "X_test": self.X_test,
-                        "y_test": self.y_test,
-                        "test_times": self.test_times,
-                        "test_target_coverage": self.test_target_coverage,
-                        "typical_abs_return": self.typical_abs_return,
-                        "test_current_close": self.test_current_close,
-                        "test_actual_next_close": self.test_actual_next_close,
+                        "training_acc": self.training_accuracy,
+                        "training_error": 1.0 - self.training_accuracy,
+                        "validation_acc": self.validation_accuracy,
+                        "validation_error": 1.0 - self.validation_accuracy,
+                        "validation_balanced_acc": validation_balanced_accuracy,
+                        "coverage_adjusted_validation_balanced_acc": coverage_adjusted_balanced_accuracy,
+                        "validation_log_loss": validation_loss,
+                        "confidence_threshold": self.confidence_threshold,
+                        "validation_confident_coverage": validation_confident_coverage,
+                        "validation_confident_accuracy": validation_confident_accuracy,
+                        "epochs_trained": len(self.history.history["loss"]),
+                        "train_time": self.train_time,
                     }
+                    self.lookback_trials.append(trial)
+                    # Target thresholds alter sample coverage.  Select the configuration by
+                    # validation only; test data remain untouched until final evaluation.
+                    score = (-coverage_adjusted_balanced_accuracy, validation_loss)
+                    if best_score is None or score < best_score:
+                        best_score = score
+                        best_state = {
+                            "model": self.model,
+                            "scaler": self.scaler,
+                            "history": self.history,
+                            "lookback": self.lookback,
+                            "target_threshold": self.target_threshold,
+                            "lstm_units": self.lstm_units,
+                            "decision_threshold": self.decision_threshold,
+                            "confidence_threshold": self.confidence_threshold,
+                            "training_accuracy": self.training_accuracy,
+                            "validation_accuracy": self.validation_accuracy,
+                            "train_time": self.train_time,
+                            "X_train": self.X_train,
+                            "y_train": self.y_train,
+                            "train_times": self.train_times,
+                            "train_target_coverage": self.train_target_coverage,
+                            "X_validation": self.X_validation,
+                            "y_validation": self.y_validation,
+                            "validation_times": self.validation_times,
+                            "validation_target_coverage": self.validation_target_coverage,
+                            "X_test": self.X_test,
+                            "y_test": self.y_test,
+                            "test_times": self.test_times,
+                            "test_target_coverage": self.test_target_coverage,
+                            "typical_abs_return": self.typical_abs_return,
+                            "test_current_close": self.test_current_close,
+                            "test_actual_next_close": self.test_actual_next_close,
+                        }
 
         for name, value in best_state.items():
             setattr(self, name, value)
@@ -484,9 +484,7 @@ class LSTMModel(Model):
             raise RuntimeError("Train the model before predicting")
         self._validate_frame(recent_data, "recent_data")
         if self.multi_timeframes:
-            recent_data = self._align_auxiliary_features(
-                recent_data, auxiliary_data or {}
-            )
+            recent_data = self._align_auxiliary_features(recent_data, auxiliary_data or {})
         features = self._numeric_features(recent_data).tail(self.lookback)
         if len(features) != self.lookback or features.isna().any().any():
             raise ValueError(f"Need {self.lookback} complete recent candles for prediction")
@@ -523,10 +521,7 @@ class LSTMModel(Model):
 
         feature_tag = "-".join(self.feature_names)
         target_tag = f"{self.target_threshold * 100:g}".replace(".", "p")
-        plot_path = self.results_path.with_name(
-            f"{self.results_path.stem}_selected_lb{self.lookback}_"
-            f"atr{target_tag}pct_features-{feature_tag}_prediction_comparison.png"
-        )
+        plot_path = self.results_path.with_name(f"{self.results_path.stem}_selected_lb{self.lookback}_atr{target_tag}pct_features-{feature_tag}_prediction_comparison.png")
         plot_path.parent.mkdir(parents=True, exist_ok=True)
 
         # A shorter recent segment remains readable when the test set contains
@@ -551,10 +546,44 @@ class LSTMModel(Model):
         plt.close(figure)
         return plot_path
 
+    def plot_model_complexity_curve(self) -> pathlib.Path | None:
+        """Plot training and validation error against the selected model capacity.
+
+        Test error is intentionally excluded: the curve is for choosing an LSTM
+        size, and that choice must be made using training/validation data only.
+        """
+        matching_trials = [trial for trial in self.lookback_trials  if (trial["target_threshold_atr_fraction"] == self.target_threshold and trial["lookback"] == self.lookback)]
+        if not matching_trials:
+            return None
+
+        trials_by_units = {trial["lstm_units"]: trial for trial in matching_trials}
+        units = sorted(trials_by_units)
+        training_errors = [trials_by_units[unit]["training_error"] for unit in units]
+        validation_errors = [trials_by_units[unit]["validation_error"] for unit in units]
+
+        target_tag = f"{self.target_threshold * 100:g}".replace(".", "p")
+        plot_path = self.results_path.with_name(f"{self.results_path.stem}_selected_lb{self.lookback}_atr{target_tag}pct_model_complexity_curve.png")
+        figure, axis = plt.subplots(figsize=(10, 6))
+        axis.plot(units, training_errors, marker="o", color="#2e7d32", label="Training error")
+        axis.plot(units, validation_errors, marker="o", color="#2468d4", label="Validation error")
+        axis.axvline(self.lstm_units, color="#d62728", linestyle="--", label=f"Selected capacity: {self.lstm_units} units",)
+        axis.set_title(f"{self.symbol} {self.timeframe}: LSTM capacity selection")
+        axis.set_xlabel("LSTM units (model complexity)")
+        axis.set_ylabel("Classification error")
+        axis.set_xticks(units)
+        axis.set_ylim(bottom=0)
+        axis.grid(alpha=0.25)
+        axis.legend()
+        figure.tight_layout()
+        figure.savefig(plot_path, dpi=160, bbox_inches="tight")
+        plt.close(figure)
+        return plot_path
+
     def evaluate(self):
         if self.y_prediction is None:
             raise RuntimeError("Run test before evaluate")
         prediction_plot_path = self.plot_prediction_comparison()
+        complexity_plot_path = self.plot_model_complexity_curve()
         confidence = np.where(self.y_prediction == 1, self.y_probability, 1.0 - self.y_probability,)
         confident = confidence >= self.confidence_threshold
         result = {
@@ -574,6 +603,8 @@ class LSTMModel(Model):
             "split_method": self.split_method,
             "lookback": self.lookback,
             "lookback_mode": self.lookback_mode,
+            "lstm_units": self.lstm_units,
+            "lstm_units_mode": self.lstm_units_mode,
             "hyperparameter_selection_metric": (
                 "maximum coverage-adjusted validation balanced accuracy; "
                 "validation log loss breaks ties"
@@ -582,6 +613,10 @@ class LSTMModel(Model):
             "lookback_candidates_evaluated": sorted({trial["lookback"] for trial in self.lookback_trials}),
             "target_threshold_candidates_evaluated": sorted(
                 {trial["target_threshold_atr_fraction"] for trial in self.lookback_trials}
+            ),
+            "lstm_unit_candidates": list(self.lstm_unit_candidates),
+            "lstm_unit_candidates_evaluated": sorted(
+                {trial["lstm_units"] for trial in self.lookback_trials}
             ),
             "hyperparameter_trials": self.lookback_trials,
             "features": self.feature_names,
@@ -611,6 +646,10 @@ class LSTMModel(Model):
             "test_log_loss": float(log_loss(self.y_test, self.y_probability, labels=[0, 1])),
             "prediction_plot": str(prediction_plot_path),
             "prediction_plot_points": min(500, len(self.test_times)),
+            "model_complexity_curve": (
+                str(complexity_plot_path) if complexity_plot_path is not None else None
+            ),
+            "model_complexity_curve_metric": "training and validation classification error; no test error",
             "predicted_price_method": (
                 "current close adjusted by the predicted direction and the "
                 "median absolute one-candle return learned from training data"
