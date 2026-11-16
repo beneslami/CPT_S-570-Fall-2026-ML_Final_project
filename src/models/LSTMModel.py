@@ -44,6 +44,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import StandardScaler
 
 from ML_interface import Model
+from strategy import Strategy
 
 
 class LSTMModel(Model):
@@ -51,8 +52,16 @@ class LSTMModel(Model):
     DEFAULT_TARGET_THRESHOLD_CANDIDATES = (0.01, 0.02, 0.05)
     DEFAULT_CONFIDENCE_THRESHOLD_CANDIDATES = (0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90)
     DEFAULT_LSTM_UNIT_CANDIDATES = (4, 8, 16, 50)
+    # Triple-barrier target: SL distance in ATRs and alpha = TP / SL (see strategy.py)
+    DEFAULT_SL_ATR_CANDIDATES = (1.0, 1.5, 2.0)
+    DEFAULT_ALPHA_CANDIDATES = (1.0, 1.5, 2.0)
+    MODEL_NAME = "LSTM"
 
-    def __init__(self, symbol: str, timeframe: str, results_path=None, lookback: int | str = "auto", target_threshold: float | str = "auto", lstm_units: int | str = "auto", epochs: int = 50, batch_size: int = 64, confidence_threshold: float | str = "auto", model_path: Optional[str] = None, random_seed: int = 42, lookback_candidates=None, target_threshold_candidates=None, lstm_unit_candidates=None, confidence_threshold_candidates=None, min_confident_coverage: float = 0.10, multi_timeframes=("15m", "4h")):
+    def __init__(self, symbol: str, timeframe: str, results_path=None, lookback: int | str = "auto", target_threshold: float | str = "auto", lstm_units: int | str = "auto", epochs: int = 50, batch_size: int = 64, confidence_threshold: float | str = "auto", model_path: Optional[str] = None, random_seed: int = 42, lookback_candidates=None, target_threshold_candidates=None, lstm_unit_candidates=None, confidence_threshold_candidates=None, min_confident_coverage: float = 0.10, multi_timeframes=("15m", "4h"), target: str = "direction", sl_atr_candidates=None, alpha_candidates=None, horizon: int = 30, cost_pct: float = 0.001, min_trades: int = 50):
+        if target not in {"direction", "triple_barrier"}:
+            raise ValueError("target must be 'direction' or 'triple_barrier'")
+        if horizon < 1 or cost_pct < 0 or min_trades < 1:
+            raise ValueError("horizon and min_trades must be positive and cost_pct non-negative")
         if lookback != "auto" and (not isinstance(lookback, int) or lookback < 2):
             raise ValueError("lookback must be 'auto' or an integer of at least 2 candles")
         if target_threshold != "auto" and (not isinstance(target_threshold, (int, float)) or target_threshold < 0):
@@ -78,6 +87,24 @@ class LSTMModel(Model):
         if not self.target_threshold_candidates or any(not isinstance(candidate, (int, float)) or candidate < 0 for candidate in self.target_threshold_candidates):
             raise ValueError("target_threshold_candidates must contain non-negative ATR fractions")
         self.target_threshold = (None if target_threshold == "auto" else float(target_threshold))
+        # target = "direction": label from the next candle's body (the original target).
+        # target = "triple_barrier": label from a long trade opened at the candle close,
+        #   SL = sl_atr x ATR, TP = alpha x SL, closed after `horizon` candles at the latest.
+        self.target = target
+        self.sl_atr_candidates = tuple(float(value) for value in (sl_atr_candidates or self.DEFAULT_SL_ATR_CANDIDATES))
+        self.alpha_candidates = tuple(float(value) for value in (alpha_candidates or self.DEFAULT_ALPHA_CANDIDATES))
+        if any(value <= 0 for value in self.sl_atr_candidates + self.alpha_candidates):
+            raise ValueError("sl_atr_candidates and alpha_candidates must be positive")
+        self.sl_atr = None
+        self.alpha = None
+        self.horizon = horizon
+        self.cost_pct = cost_pct            # round-trip cost as a fraction of price
+        self.min_trades = min_trades        # fewest validation trades for a setting to be selectable
+        self.p0_train = None                # no-model take-profit rate on training candles
+        # Per-sequence trade outcomes (triple barrier only): result in R before costs, and costs in R
+        self.validation_r = self.validation_cost_r = None
+        self.test_r = self.test_cost_r = None
+        self.validation_trading = None      # trading statistics of the selected setting on validation
         self.lstm_units_mode = lstm_units
         self.lstm_unit_candidates = tuple(lstm_unit_candidates or self.DEFAULT_LSTM_UNIT_CANDIDATES)
         if not self.lstm_unit_candidates or any(not isinstance(candidate, int) or candidate < 1 for candidate in self.lstm_unit_candidates):
@@ -248,15 +275,91 @@ class LSTMModel(Model):
         if not times.is_monotonic_increasing or times.duplicated().any():
             raise ValueError(f"{name} must have unique, increasing timestamps")
 
+    # ------------------------------------------------------------------
+    # Target settings: "direction" uses target_threshold, "triple_barrier" uses (sl_atr, alpha)
+    # ------------------------------------------------------------------
+    def _target_candidates(self):
+        """All target settings the search should try, as dictionaries."""
+        if self.target == "direction":
+            thresholds = self.target_threshold_candidates if self.target_threshold_mode == "auto" else (self.target_threshold,)
+            return [{"target_threshold": float(t)} for t in thresholds]
+        return [{"sl_atr": s, "alpha": a} for s in self.sl_atr_candidates for a in self.alpha_candidates]
+
+    def _apply_target(self, setting):
+        for name, value in setting.items():
+            setattr(self, name, value)
+
+    def _current_target_setting(self):
+        if self.target == "direction":
+            return {"target_threshold": self.target_threshold}
+        return {"sl_atr": self.sl_atr, "alpha": self.alpha}
+
+    def _target_tag(self):
+        """Short text used in plot file names."""
+        if self.target == "direction":
+            return f"atr{self.target_threshold * 100:g}pct".replace(".", "p")
+        return f"sl{self.sl_atr:g}_a{self.alpha:g}_h{self.horizon}".replace(".", "p")
+
+    def _target_description(self):
+        if self.target == "direction":
+            return (f"next candle body > {self.target_threshold:.0%} of current ATR: bullish; "
+                    f"next candle body < -{self.target_threshold:.0%} of current ATR: bearish; smaller moves omitted")
+        return (f"long trade opened at the candle close with SL = {self.sl_atr:g} ATR and TP = {self.alpha:g} x SL; "
+                f"1 if TP is hit first, 0 if SL is hit first or neither is hit within {self.horizon} candles "
+                "(SL and TP inside the same candle counts as SL)")
+
+    def _triple_barrier(self, data: pd.DataFrame):
+        """Simulate a long trade at every candle close.
+
+        Returns three arrays (NaN where fewer than `horizon` future candles exist):
+            win    : 1 if TP is hit before SL, otherwise 0
+            r      : trade result in R before costs (+alpha, -1, or the open result at the time limit)
+            cost_r : round-trip cost in R = cost_pct x entry / SL distance
+        """
+        close = pd.to_numeric(data["close"], errors="coerce").to_numpy(dtype=float)
+        high = pd.to_numeric(data["high"], errors="coerce").to_numpy(dtype=float)
+        low = pd.to_numeric(data["low"], errors="coerce").to_numpy(dtype=float)
+        atr = pd.to_numeric(data["atr_14"], errors="coerce").to_numpy(dtype=float)
+        n = len(close)
+        win = np.full(n, np.nan)
+        r = np.full(n, np.nan)
+        cost_r = np.full(n, np.nan)
+        for t in range(n - self.horizon):
+            entry = close[t]
+            sl_distance = self.sl_atr * atr[t]
+            if not np.isfinite(entry) or not np.isfinite(sl_distance) or sl_distance <= 0:
+                continue
+            stop = entry - sl_distance
+            target = entry + self.alpha * sl_distance
+            win[t], r[t] = 0, (close[t + self.horizon] - entry) / sl_distance    # timeout unless a barrier is hit
+            for j in range(t + 1, t + self.horizon + 1):
+                if low[j] <= stop:            # checked first: a candle touching both counts as a loss
+                    r[t] = -1.0
+                    break
+                if high[j] >= target:
+                    win[t], r[t] = 1, self.alpha
+                    break
+            cost_r[t] = self.cost_pct * entry / sl_distance
+        return win, r, cost_r
+
     def _make_sequences(self, data: pd.DataFrame, fit_scaler: bool):
-        """End each sequence at candle t and label it from candle t+1."""
+        """End each sequence at candle t and label it from what happens after t.
+
+        Returns X, y, end times, label coverage, and (triple barrier only) the R
+        outcome and the cost in R of a trade opened at each sequence end.
+        """
         features = self._numeric_features(data)
-        next_body = (pd.to_numeric(data["close"], errors="coerce").shift(-1) - pd.to_numeric(data["open"], errors="coerce").shift(-1))
-        current_atr = pd.to_numeric(data["atr_14"], errors="coerce")
-        minimum_move = self.target_threshold * current_atr
-        labels = pd.Series(np.nan, index=data.index)
-        labels.loc[next_body > minimum_move] = 1
-        labels.loc[next_body < -minimum_move] = 0
+        outcome_r = outcome_cost_r = None
+        if self.target == "direction":
+            next_body = (pd.to_numeric(data["close"], errors="coerce").shift(-1) - pd.to_numeric(data["open"], errors="coerce").shift(-1))
+            current_atr = pd.to_numeric(data["atr_14"], errors="coerce")
+            minimum_move = self.target_threshold * current_atr
+            labels = pd.Series(np.nan, index=data.index)
+            labels.loc[next_body > minimum_move] = 1
+            labels.loc[next_body < -minimum_move] = 0
+        else:
+            win, outcome_r, outcome_cost_r = self._triple_barrier(data)
+            labels = pd.Series(win, index=data.index)
 
         if fit_scaler:
             scale_rows = features.notna().all(axis=1)
@@ -268,6 +371,8 @@ class LSTMModel(Model):
         sequences = []
         targets = []
         sequence_times = []
+        trade_r = []
+        trade_cost_r = []
         parsed_times = pd.to_datetime(data["time"], utc=True)
         for end in range(self.lookback - 1, len(data) - 1):
             start = end - self.lookback + 1
@@ -277,12 +382,18 @@ class LSTMModel(Model):
             sequences.append(window.to_numpy(dtype=np.float32))
             targets.append(int(labels.iloc[end]))
             sequence_times.append(parsed_times.iloc[end])
+            if outcome_r is not None:
+                trade_r.append(outcome_r[end])
+                trade_cost_r.append(outcome_cost_r[end])
 
         if not sequences:
             raise ValueError("No complete LSTM sequences could be created")
         possible_sequences = max(1, len(data) - self.lookback)
         target_coverage = len(sequences) / possible_sequences
-        return (np.asarray(sequences, dtype=np.float32), np.asarray(targets, dtype=np.float32), pd.DatetimeIndex(sequence_times, name="feature_end_time"), target_coverage,)
+        outcomes = None
+        if outcome_r is not None:
+            outcomes = (np.asarray(trade_r, dtype=float), np.asarray(trade_cost_r, dtype=float))
+        return (np.asarray(sequences, dtype=np.float32), np.asarray(targets, dtype=np.float32), pd.DatetimeIndex(sequence_times, name="feature_end_time"), target_coverage, outcomes)
 
     @staticmethod
     def _aligned_closes(data: pd.DataFrame, sequence_times):
@@ -300,9 +411,14 @@ class LSTMModel(Model):
     def _prepare_sequences(self):
         """Build one candidate's sequences after ``self.lookback`` is set."""
         self.scaler = StandardScaler()
-        (self.X_train, self.y_train, self.train_times, self.train_target_coverage,) = self._make_sequences(self._train_frame, fit_scaler=True)
-        (self.X_validation, self.y_validation, self.validation_times, self.validation_target_coverage,) = self._make_sequences(self._validation_frame, fit_scaler=False)
-        (self.X_test, self.y_test, self.test_times, self.test_target_coverage,) = self._make_sequences(self._test_frame, fit_scaler=False)
+        (self.X_train, self.y_train, self.train_times, self.train_target_coverage, _) = self._make_sequences(self._train_frame, fit_scaler=True)
+        (self.X_validation, self.y_validation, self.validation_times, self.validation_target_coverage, validation_outcomes) = self._make_sequences(self._validation_frame, fit_scaler=False)
+        (self.X_test, self.y_test, self.test_times, self.test_target_coverage, test_outcomes) = self._make_sequences(self._test_frame, fit_scaler=False)
+        if self.target == "triple_barrier":
+            # p0 is measured on training candles only: how often the TP is hit with no model at all
+            self.p0_train = float(np.mean(self.y_train))
+            self.validation_r, self.validation_cost_r = validation_outcomes
+            self.test_r, self.test_cost_r = test_outcomes
 
         train_current_close, train_actual_next_close = self._aligned_closes(self._train_frame, self.train_times,)
         train_abs_return = np.abs(train_actual_next_close / train_current_close - 1.0)
@@ -348,8 +464,73 @@ class LSTMModel(Model):
         self._test_frame = test_frame
         # Fixed hyperparameters preserve the former one-model behaviour. In auto
         # mode, train() builds candidates but does not score test data to select one.
-        if (self.lookback is not None and self.target_threshold is not None and self.lstm_units is not None):
+        if (self.target == "direction" and self.lookback is not None and self.target_threshold is not None and self.lstm_units is not None):
             self._prepare_sequences()
+
+    def _trading_stats(self, q, y, r, cost_r):
+        """Trade every candle where the model's q clears the Strategy threshold, and measure the result.
+
+        q      : model probability that the TP is hit first, per candle
+        y      : 1 if the TP was actually hit first, otherwise 0
+        r      : actual trade result in R before costs (+alpha, -1, or the open result at the time limit)
+        cost_r : cost of the trade in R (c / SL)
+        Threshold per candle (Strategy.threshold): q > p0_train + cost_r / (1 + alpha).
+        """
+        strategy = Strategy(alpha=self.alpha, sl_atr=self.sl_atr, cost_pct=self.cost_pct)
+        q = np.asarray(q, dtype=float)
+        y = np.asarray(y, dtype=float)
+        threshold =self.p0_train + cost_r / (1.0 + self.alpha)
+        take = q > threshold
+        n_trades = int(take.sum())
+        p0_split = float(np.mean(y))            # no-model TP rate on this split
+        stats = {
+            "n_candles": int(len(q)),
+            "n_trades": n_trades,
+            "trade_share": n_trades / len(q),
+            "p0_train": self.p0_train,
+            "p0": p0_split,
+            "p0_theory": strategy.break_even_win_rate(),
+            "mean_threshold": float(np.mean(threshold)),
+            "mean_cost_r": float(np.mean(cost_r)),
+            "no_model_expectancy_net_r": float(np.mean(r - cost_r)),   # trading every candle
+            "p": None, "edge": None, "timeout_share": None, "mean_gross_r": None,
+            "expectancy_net_r": None, "expectancy_net_r_95pct": None, "expectancy_net_formula_r": None,
+        }
+        if n_trades > 0:
+            p = float(np.mean(y[take]))
+            net_r = r[take] - cost_r[take]
+            half_width = 1.96 * float(np.std(net_r)) / np.sqrt(n_trades)
+            stats.update({
+                "p": p,
+                "edge": p - p0_split,
+                "timeout_share": float(np.mean((r[take] != self.alpha) & (r[take] != -1.0))),
+                "mean_gross_r": float(np.mean(r[take])),
+                "mean_trade_cost_r": float(np.mean(cost_r[take])),
+                # Measured: the average real result of the trades taken (timeouts at their real R)
+                "expectancy_net_r": float(np.mean(net_r)),
+                "expectancy_net_r_95pct": [float(np.mean(net_r)) - half_width, float(np.mean(net_r)) + half_width],
+                # Formula (1 + alpha)(p - p0) - c/SL; equals the measured value only when every non-win loses 1R
+                "expectancy_net_formula_r": strategy.expectancy(p, p0_split, float(np.mean(cost_r[take]))),
+            })
+        # Calibration: when the model says q, how often is the TP really hit?
+        bins = [0.0, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 1.0]
+        calibration = []
+        for low, high in zip(bins[:-1], bins[1:]):
+            in_bin = (q >= low) & (q < high)
+            if in_bin.any():
+                calibration.append({"q_range": [low, high], "count": int(in_bin.sum()),
+                                    "mean_q": float(np.mean(q[in_bin])), "actual_tp_rate": float(np.mean(y[in_bin]))})
+        stats["calibration"] = calibration
+        return stats
+
+    def _selection_score(self, trial):
+        """Smaller is better. Direction: the original accuracy score. Triple barrier: validation E_net."""
+        if self.target == "direction":
+            return (-trial["coverage_adjusted_validation_balanced_acc"], trial["validation_log_loss"])
+        stats = trial["validation_trading"]
+        if stats["n_trades"] < self.min_trades:
+            return (1, -stats["n_trades"], trial["validation_log_loss"])   # too few trades: ranked after every valid setting
+        return (0, -stats["expectancy_net_r"], trial["validation_log_loss"])
 
     def _train_current_lookback(self):
         early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True,)
@@ -385,6 +566,8 @@ class LSTMModel(Model):
                 selected_accuracy = selective_accuracy
         if best_confidence_score is None:
             raise ValueError("No confidence threshold meets min_confident_coverage")
+        if self.target == "triple_barrier":
+            self.validation_trading = self._trading_stats(validation_probability, self.y_validation, self.validation_r, self.validation_cost_r)
         return (validation_loss, validation_balanced_accuracy, selected_coverage, selected_accuracy,)
 
     def train(self):
@@ -392,22 +575,22 @@ class LSTMModel(Model):
             raise RuntimeError("Run feature_engineering before train")
 
         lookback_candidates = (self.lookback_candidates if self.lookback_mode == "auto" else (self.lookback,) )
-        target_threshold_candidates = (self.target_threshold_candidates if self.target_threshold_mode == "auto" else (self.target_threshold,))
         lstm_unit_candidates = (self.lstm_unit_candidates if self.lstm_units_mode == "auto" else (self.lstm_units,))
         self.lookback_trials = []
         self.target_threshold_trials = self.lookback_trials
         best_state = None
         best_score = None
-        for target_threshold in target_threshold_candidates:
+        for target_setting in self._target_candidates():
             for lookback in lookback_candidates:
                 for lstm_units in lstm_unit_candidates:
-                    self.target_threshold = float(target_threshold)
+                    self._apply_target(target_setting)
                     self.lookback = lookback
                     self.lstm_units = lstm_units
                     self._prepare_sequences()
                     (validation_loss, validation_balanced_accuracy, validation_confident_coverage, validation_confident_accuracy) = self._train_current_lookback()
                     coverage_adjusted_balanced_accuracy = (validation_balanced_accuracy * self.validation_target_coverage)
                     trial = {
+                        "target_setting": dict(target_setting),
                         "target_threshold_atr_fraction": self.target_threshold,
                         "lookback": lookback,
                         "lstm_units": self.lstm_units,
@@ -427,11 +610,11 @@ class LSTMModel(Model):
                         "validation_confident_accuracy": validation_confident_accuracy,
                         "epochs_trained": len(self.history.history["loss"]),
                         "train_time": self.train_time,
+                        "validation_trading": self.validation_trading if self.target == "triple_barrier" else None,
                     }
                     self.lookback_trials.append(trial)
-                    # Target thresholds alter sample coverage.  Select the configuration by
-                    # validation only; test data remain untouched until final evaluation.
-                    score = (-coverage_adjusted_balanced_accuracy, validation_loss)
+                    # Select the configuration by validation only; test data remain untouched until final evaluation.
+                    score = self._selection_score(trial)
                     if best_score is None or score < best_score:
                         best_score = score
                         best_state = {
@@ -461,6 +644,14 @@ class LSTMModel(Model):
                             "typical_abs_return": self.typical_abs_return,
                             "test_current_close": self.test_current_close,
                             "test_actual_next_close": self.test_actual_next_close,
+                            "sl_atr": self.sl_atr,
+                            "alpha": self.alpha,
+                            "p0_train": self.p0_train,
+                            "validation_r": self.validation_r,
+                            "validation_cost_r": self.validation_cost_r,
+                            "test_r": self.test_r,
+                            "test_cost_r": self.test_cost_r,
+                            "validation_trading": self.validation_trading,
                         }
 
         for name, value in best_state.items():
@@ -520,8 +711,7 @@ class LSTMModel(Model):
         self.test_predicted_next_close = self.test_current_close * (1.0 + predicted_direction * self.typical_abs_return)
 
         feature_tag = "-".join(self.feature_names)
-        target_tag = f"{self.target_threshold * 100:g}".replace(".", "p")
-        plot_path = self.results_path.with_name(f"{self.results_path.stem}_selected_lb{self.lookback}_atr{target_tag}pct_features-{feature_tag}_prediction_comparison.png")
+        plot_path = self.results_path.with_name(f"{self.results_path.stem}_selected_lb{self.lookback}_{self._target_tag()}_features-{feature_tag}_prediction_comparison.png")
         plot_path.parent.mkdir(parents=True, exist_ok=True)
 
         # A shorter recent segment remains readable when the test set contains
@@ -552,7 +742,7 @@ class LSTMModel(Model):
         Test error is intentionally excluded: the curve is for choosing an LSTM
         size, and that choice must be made using training/validation data only.
         """
-        matching_trials = [trial for trial in self.lookback_trials  if (trial["target_threshold_atr_fraction"] == self.target_threshold and trial["lookback"] == self.lookback)]
+        matching_trials = [trial for trial in self.lookback_trials  if (trial["target_setting"] == self._current_target_setting() and trial["lookback"] == self.lookback)]
         if not matching_trials:
             return None
 
@@ -561,8 +751,7 @@ class LSTMModel(Model):
         training_errors = [trials_by_units[unit]["training_error"] for unit in units]
         validation_errors = [trials_by_units[unit]["validation_error"] for unit in units]
 
-        target_tag = f"{self.target_threshold * 100:g}".replace(".", "p")
-        plot_path = self.results_path.with_name(f"{self.results_path.stem}_selected_lb{self.lookback}_atr{target_tag}pct_model_complexity_curve.png")
+        plot_path = self.results_path.with_name(f"{self.results_path.stem}_selected_lb{self.lookback}_{self._target_tag()}_model_complexity_curve.png")
         figure, axis = plt.subplots(figsize=(10, 6))
         axis.plot(units, training_errors, marker="o", color="#2e7d32", label="Training error")
         axis.plot(units, validation_errors, marker="o", color="#2468d4", label="Validation error")
@@ -579,6 +768,27 @@ class LSTMModel(Model):
         plt.close(figure)
         return plot_path
 
+    def _trading_result(self):
+        """Trading part of the JSON report (triple barrier only)."""
+        if self.target != "triple_barrier":
+            return {"trading": None}
+        return {
+            "sl_atr": self.sl_atr,
+            "alpha": self.alpha,
+            "horizon": self.horizon,
+            "cost_pct": self.cost_pct,
+            "sl_atr_candidates": list(self.sl_atr_candidates),
+            "alpha_candidates": list(self.alpha_candidates),
+            "min_trades": self.min_trades,
+            "trading": {
+                "rule": "long when q > p0_train + (c/SL) / (1 + alpha); exit at TP, SL or after horizon candles",
+                "note": ("trades can overlap in time, so the 95% range is optimistic; "
+                         "cost_pct is an assumed round-trip cost, not a broker quote"),
+                "validation": self.validation_trading,
+                "test": self._trading_stats(self.y_probability, self.y_test, self.test_r, self.test_cost_r),
+            },
+        }
+
     def evaluate(self):
         if self.y_prediction is None:
             raise RuntimeError("Run test before evaluate")
@@ -589,13 +799,10 @@ class LSTMModel(Model):
         result = {
             "symbol": self.symbol,
             "time": datetime.now().isoformat(timespec="seconds"),
-            "model": "LSTM",
+            "model": self.MODEL_NAME,
             "timeframe": self.timeframe,
-            "target": (
-                f"next candle body > {self.target_threshold:.0%} of current ATR: bullish; "
-                f"next candle body < -{self.target_threshold:.0%} of current ATR: bearish; "
-                "smaller moves omitted"
-            ),
+            "target_type": self.target,
+            "target": self._target_description(),
             "target_threshold_atr_fraction": self.target_threshold,
             "target_threshold_mode": self.target_threshold_mode,
             "target_threshold_candidates": list(self.target_threshold_candidates),
@@ -606,8 +813,9 @@ class LSTMModel(Model):
             "lstm_units": self.lstm_units,
             "lstm_units_mode": self.lstm_units_mode,
             "hyperparameter_selection_metric": (
-                "maximum coverage-adjusted validation balanced accuracy; "
-                "validation log loss breaks ties"
+                "maximum coverage-adjusted validation balanced accuracy; validation log loss breaks ties"
+                if self.target == "direction" else
+                f"maximum validation expectancy_net_r among settings with at least {self.min_trades} validation trades; validation log loss breaks ties"
             ),
             "lookback_candidates": list(self.lookback_candidates),
             "lookback_candidates_evaluated": sorted({trial["lookback"] for trial in self.lookback_trials}),
@@ -667,6 +875,7 @@ class LSTMModel(Model):
             "confident_coverage": float(confident.mean()),
             "confident_accuracy": (float(accuracy_score(self.y_test[confident], self.y_prediction[confident])) if confident.any() else None),
         }
+        result.update(self._trading_result())
 
         results = []
         if self.results_path.exists():
