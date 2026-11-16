@@ -99,6 +99,12 @@ class TransformerModel(LSTMModel):
         screening_trials: int = 32,
         finalist_trials: int = 6,
         screening_epochs: int = 8,
+        target: str = "direction",
+        sl_atr_candidates=None,
+        alpha_candidates=None,
+        horizon: int = 30,
+        cost_pct: float = 0.001,
+        min_trades: int = 50,
     ):
         # ``lstm_units='auto'`` prevents the inherited feature_engineering()
         # method from constructing an LSTM before a Transformer configuration is
@@ -121,6 +127,12 @@ class TransformerModel(LSTMModel):
             confidence_threshold_candidates=confidence_threshold_candidates,
             min_confident_coverage=min_confident_coverage,
             multi_timeframes=multi_timeframes,
+            target=target,
+            sl_atr_candidates=sl_atr_candidates,
+            alpha_candidates=alpha_candidates,
+            horizon=horizon,
+            cost_pct=cost_pct,
+            min_trades=min_trades,
         )
         # Keep the Transformer feature set explicit and independent from the
         # smaller LSTM baseline feature list.
@@ -264,15 +276,11 @@ class TransformerModel(LSTMModel):
         lookbacks = (
             self.lookback_candidates if self.lookback_mode == "auto" else (self.lookback,)
         )
-        thresholds = (
-            self.target_threshold_candidates
-            if self.target_threshold_mode == "auto"
-            else (self.target_threshold,)
-        )
+        # Each candidate: (target setting dict, lookback, architecture)
         return [
-            (float(threshold), lookback, copy.deepcopy(config))
-            for threshold, lookback, config in itertools.product(
-                thresholds, lookbacks, self.transformer_configs
+            (dict(setting), lookback, copy.deepcopy(config))
+            for setting, lookback, config in itertools.product(
+                self._target_candidates(), lookbacks, self.transformer_configs
             )
         ]
 
@@ -285,7 +293,7 @@ class TransformerModel(LSTMModel):
         order = generator.permutation(len(candidates)).tolist()
         selected_indices = []
         observed = {
-            "threshold": set(),
+            "target": set(),
             "lookback": set(),
             "embedding_dim": set(),
             "num_heads": set(),
@@ -293,9 +301,9 @@ class TransformerModel(LSTMModel):
             "dropout": set(),
         }
         for index in order:
-            threshold, lookback, config = candidates[index]
+            setting, lookback, config = candidates[index]
             values = {
-                "threshold": threshold,
+                "target": tuple(sorted(setting.items())),
                 "lookback": lookback,
                 "embedding_dim": config["embedding_dim"],
                 "num_heads": config["num_heads"],
@@ -317,8 +325,8 @@ class TransformerModel(LSTMModel):
         return [candidates[index] for index in selected_indices]
 
     def _run_candidate(self, setting, search_round, epoch_budget):
-        target_threshold, lookback, config = setting
-        self.target_threshold = target_threshold
+        target_setting, lookback, config = setting
+        self._apply_target(target_setting)
         self.lookback = lookback
         self.transformer_config = copy.deepcopy(config)
         self._prepare_sequences()
@@ -341,6 +349,7 @@ class TransformerModel(LSTMModel):
         trial = {
             "search_round": search_round,
             "epoch_budget": epoch_budget,
+            "target_setting": dict(target_setting),
             "target_threshold_atr_fraction": self.target_threshold,
             "lookback": self.lookback,
             "transformer_config": copy.deepcopy(self.transformer_config),
@@ -360,6 +369,7 @@ class TransformerModel(LSTMModel):
             "validation_confident_accuracy": validation_confident_accuracy,
             "epochs_trained": len(self.history.history["loss"]),
             "train_time": self.train_time,
+            "validation_trading": self.validation_trading if self.target == "triple_barrier" else None,
         }
         return trial
 
@@ -391,14 +401,19 @@ class TransformerModel(LSTMModel):
             "typical_abs_return": self.typical_abs_return,
             "test_current_close": self.test_current_close,
             "test_actual_next_close": self.test_actual_next_close,
+            "sl_atr": self.sl_atr,
+            "alpha": self.alpha,
+            "p0_train": self.p0_train,
+            "validation_r": self.validation_r,
+            "validation_cost_r": self.validation_cost_r,
+            "test_r": self.test_r,
+            "test_cost_r": self.test_cost_r,
+            "validation_trading": self.validation_trading,
         }
 
-    @staticmethod
-    def _trial_score(trial):
-        return (
-            -trial["coverage_adjusted_validation_balanced_acc"],
-            trial["validation_log_loss"],
-        )
+    def _trial_score(self, trial):
+        # Same rule as the LSTM: accuracy for "direction", validation E_net for "triple_barrier"
+        return self._selection_score(trial)
 
     def train(self):
         if self._train_frame is None:
@@ -424,7 +439,7 @@ class TransformerModel(LSTMModel):
                     self._run_candidate(setting, "screening", self.screening_epochs)
                 )
             finalists = [
-                (trial["target_threshold_atr_fraction"], trial["lookback"], trial["transformer_config"])
+                (trial["target_setting"], trial["lookback"], trial["transformer_config"])
                 for trial in sorted(self.lookback_trials, key=self._trial_score)[: self.finalist_trials]
             ]
 
@@ -460,8 +475,9 @@ class TransformerModel(LSTMModel):
         matching_trials = [
             trial for trial in self.lookback_trials
             if (
-                trial["target_threshold_atr_fraction"] == self.target_threshold
+                trial["target_setting"] == self._current_target_setting()
                 and trial["lookback"] == self.lookback
+                and trial["search_round"] == "finalist"
             )
         ]
         if not matching_trials:
@@ -474,10 +490,9 @@ class TransformerModel(LSTMModel):
         selected_label = self._config_label(self.transformer_config)
         selected_position = labels.index(selected_label)
 
-        target_tag = f"{self.target_threshold * 100:g}".replace(".", "p")
         plot_path = self.results_path.with_name(
             f"{self.results_path.stem}_selected_lb{self.lookback}_"
-            f"atr{target_tag}pct_hyperparameter_curve.png"
+            f"{self._target_tag()}_hyperparameter_curve.png"
         )
         figure, axis = plt.subplots(figsize=(12, 6))
         axis.plot(positions, training_errors, marker="o", color="#2e7d32", label="Training error")
@@ -511,11 +526,8 @@ class TransformerModel(LSTMModel):
             "time": datetime.now().isoformat(timespec="seconds"),
             "model": "Transformer",
             "timeframe": self.timeframe,
-            "target": (
-                f"next candle body > {self.target_threshold:.0%} of current ATR: bullish; "
-                f"next candle body < -{self.target_threshold:.0%} of current ATR: bearish; "
-                "smaller moves omitted"
-            ),
+            "target_type": self.target,
+            "target": self._target_description(),
             "target_threshold_atr_fraction": self.target_threshold,
             "target_threshold_mode": self.target_threshold_mode,
             "target_threshold_candidates": list(self.target_threshold_candidates),
@@ -532,8 +544,9 @@ class TransformerModel(LSTMModel):
             "screening_epochs": self.screening_epochs,
             "finalist_trials_requested": self.finalist_trials,
             "hyperparameter_selection_metric": (
-                "maximum coverage-adjusted validation balanced accuracy; "
-                "validation log loss breaks ties"
+                "maximum coverage-adjusted validation balanced accuracy; validation log loss breaks ties"
+                if self.target == "direction" else
+                f"maximum validation expectancy_net_r among settings with at least {self.min_trades} validation trades; validation log loss breaks ties"
             ),
             "lookback_candidates": list(self.lookback_candidates),
             "lookback_candidates_evaluated": sorted({trial["lookback"] for trial in self.lookback_trials}),
@@ -598,6 +611,7 @@ class TransformerModel(LSTMModel):
                 else None
             ),
         }
+        result.update(self._trading_result())
 
         results = []
         if self.results_path.exists():
