@@ -162,3 +162,5 @@ class XGBoostModel(Model):
             json.dump(results, file, indent=2)
         print(f"Result appended to {self.results_path} ({len(results)} runs total)")
         return result
+
+
