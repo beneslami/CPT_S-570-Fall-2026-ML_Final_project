@@ -1,6 +1,7 @@
 import backtrader as bt
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 
 def prepare_bracket_signals(ohlcv_df, backend):
@@ -34,17 +35,165 @@ def prepare_bracket_signals(ohlcv_df, backend):
     return result
 
 
+def prepare_multitimeframe_proxy_signals(higher_ohlcv, lower_ohlcv, backend,
+                                         higher_timeframe, lower_timeframe):
+    """Place each completed higher-timeframe signal on its final lower candle."""
+    from models.XGBoost import _normalize_ohlcv
+
+    high_interval = pd.Timedelta(higher_timeframe)
+    low_interval = pd.Timedelta(lower_timeframe)
+    if low_interval <= pd.Timedelta(0) or high_interval <= low_interval or high_interval % low_interval:
+        raise ValueError('Higher timeframe must be an exact multiple of the lower timeframe')
+    higher = _normalize_ohlcv(higher_ohlcv)
+    lower = _normalize_ohlcv(lower_ohlcv)
+    high_signals = prepare_bracket_signals(higher, backend)
+    proxy = backend.predict_next_candle(higher)
+    displacement = proxy - higher['Close']
+    signal_time = higher.index + high_interval
+    signals = pd.DataFrame({'signal': high_signals['signal'].to_numpy(),
+                            'proxy_displacement': displacement.to_numpy(),
+                            'price_proxy': proxy.to_numpy(),
+                            'atr': high_signals['atr'].to_numpy()}, index=signal_time)
+    result = lower.copy()
+    events = signals.reindex(lower.index + low_interval)
+    result['signal'] = events['signal'].fillna(0).to_numpy(dtype=int)
+    result['proxy_displacement'] = events['proxy_displacement'].to_numpy(dtype=float)
+    result['price_proxy'] = events['price_proxy'].to_numpy(dtype=float)
+    result['atr'] = events['atr'].to_numpy(dtype=float)
+    result['horizon'] = backend.max_bars * int(high_interval / low_interval)
+    return result
+
+
+def plot_backtest_positions(frame, result, path, timeframe, recent_days=None):
+    """Plot closes, the signal-time proxy, and entry-to-exit trade rectangles."""
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from matplotlib.dates import date2num
+    from matplotlib.figure import Figure
+    from matplotlib.patches import Patch, Rectangle
+
+    interval = pd.Timedelta(timeframe)
+    if frame.empty or interval <= pd.Timedelta(0):
+        raise ValueError('A nonempty frame and positive timeframe are required for plotting')
+    start = frame.index[0]
+    end = frame.index[-1] + interval
+    if recent_days is not None:
+        start = max(start, end - pd.Timedelta(days=recent_days))
+    fig = Figure(figsize=(16, 8), layout='constrained')
+    FigureCanvasAgg(fig)
+    ax = fig.subplots()
+    shown = frame.loc[frame.index + interval >= start]
+    ax.plot(shown.index + interval, shown['Close'], color='#222222', linewidth=.8,
+            label=f'Actual {timeframe} close', zorder=2)
+    if 'price_proxy' in shown:
+        valid = shown['price_proxy'].notna()
+        ax.scatter(shown.index[valid] + interval, shown.loc[valid, 'price_proxy'],
+                   s=5, color='#356ac3', alpha=.55, label='Higher-timeframe signal-time price proxy', zorder=3)
+
+    def draw_rectangle(entry_time, exit_time, entry, exit_price, color, dashed=False):
+        left = max(entry_time, start)
+        right = min(exit_time, end)
+        if right <= left:
+            return
+        bottom, top = sorted((entry, exit_price))
+        rect = Rectangle((date2num(left.to_pydatetime()), bottom),
+                         date2num(right.to_pydatetime()) - date2num(left.to_pydatetime()),
+                         top - bottom, facecolor=color, edgecolor=color, alpha=.25,
+                         linewidth=1, linestyle='--' if dashed else '-')
+        ax.add_patch(rect)
+        ax.scatter([entry_time, exit_time], [entry, exit_price], s=8, color=color, zorder=4)
+
+    for trade in result['trades']:
+        # OHLC data identifies the exit candle, not the intrabar exit time.
+        exit_end = trade['exit_time'] + interval
+        color = '#159166' if trade['net_pnl'] > 0 else '#d24a43'
+        draw_rectangle(trade['entry_time'], exit_end, trade['entry'], trade['exit'], color)
+    if result['open_position'] is not None:
+        position = result['open_position']
+        draw_rectangle(position['entry_time'], end, position['entry'], frame['Close'].iloc[-1], '#e3981a', True)
+    ax.set_xlim(start, end)
+    ax.set_title(f"{result['symbol']} backtest — actual price, direction-implied proxy and positions\n"
+                 'Position rectangle: entry to exit candle; height: entry to exit price')
+    ax.set_xlabel('Time (UTC)')
+    ax.set_ylabel('Price')
+    ax.grid(alpha=.2)
+    handles, labels = ax.get_legend_handles_labels()
+    handles.extend([Patch(facecolor='#159166', alpha=.25, label='Profitable closed trade'),
+                    Patch(facecolor='#d24a43', alpha=.25, label='Losing or flat closed trade'),
+                    Patch(facecolor='#e3981a', alpha=.25, label='Open position (last close)')])
+    ax.legend(handles=handles, loc='upper left')
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=140)
+    return path
+
+
+def prepare_price_signals(ohlcv_df, backend):
+    """Convert genuine next-close price forecasts into direction signals."""
+    from models.XGBoost import _normalize_ohlcv
+
+    frame = _normalize_ohlcv(ohlcv_df)
+    prediction = backend.predict_next_candle(frame).reindex(frame.index)
+    frame['predicted_price'] = prediction
+    frame['signal'] = np.where(prediction.notna(), np.sign(prediction - frame['Close']), 0).astype(int)
+    previous = frame['Close'].shift(1)
+    true_range = pd.concat([(frame['High'] - frame['Low']),
+                            (frame['High'] - previous).abs(),
+                            (frame['Low'] - previous).abs()], axis=1).max(axis=1)
+    frame['atr'] = true_range.rolling(14).mean()
+    return frame
+
+
+def prepare_direction_signals(ohlcv_df, backend):
+    """Build signals from next-close direction probabilities."""
+    from models.XGBoost import _normalize_ohlcv
+
+    frame = _normalize_ohlcv(ohlcv_df)
+    probability = backend.predict_direction_probability(frame).reindex(frame.index)
+    frame['probability'] = probability
+    frame['signal'] = np.where(probability.notna(),
+                               np.where(probability >= backend.decision_threshold, 1, -1), 0)
+    previous = frame['Close'].shift(1)
+    true_range = pd.concat([(frame['High'] - frame['Low']),
+                            (frame['High'] - previous).abs(),
+                            (frame['Low'] - previous).abs()], axis=1).max(axis=1)
+    frame['atr'] = true_range.rolling(14).mean()
+    return frame
+
+
+def prepare_adaptive_signals(ohlcv_df, backend):
+    """Use each adaptive forecast's price, displacement and chosen horizon."""
+    from models.XGBoost import _normalize_ohlcv
+
+    frame = _normalize_ohlcv(ohlcv_df)
+    forecasts = backend.predict_forecasts(frame).reindex(frame.index)
+    for name in forecasts.columns:
+        frame[name] = forecasts[name]
+    frame['signal'] = np.where(frame['predicted_price'].notna(),
+                               np.sign(frame['predicted_displacement']), 0).astype(int)
+    previous = frame['Close'].shift(1)
+    tr = pd.concat([(frame['High'] - frame['Low']), (frame['High'] - previous).abs(),
+                    (frame['Low'] - previous).abs()], axis=1).max(axis=1)
+    frame['atr'] = tr.rolling(14).mean()
+    return frame
+
+
 def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
-                         initial_cash=10000.0, position_value=100.0, commission=0.001):
+                         initial_cash=1000.0, position_value=1000.0, commission=0.001,
+                         prepared_signals=None, dynamic_forecast=False, reward_risk=2.0,
+                         proxy_distance_mode=False, risk_fraction=None, stop_atr_multiplier=None):
     """Trade bracket probabilities at the next open using conservative OHLC fills.
 
     The final open position is marked at the last close; it is not forcibly sold.
     Drawdown is measured at candle closes, not from intrabar extremes.
     """
-    if initial_cash <= 0 or position_value <= 0 or not 0 <= commission < 1:
+    if initial_cash <= 0 or position_value <= 0 or not 0 <= commission < 1 or reward_risk <= 0:
         raise ValueError("Initial cash and position value must be positive; commission must be in [0, 1)")
+    if (risk_fraction is None) != (stop_atr_multiplier is None):
+        raise ValueError("risk_fraction and stop_atr_multiplier must be provided together")
+    if risk_fraction is not None and (not 0 < risk_fraction < 1 or stop_atr_multiplier <= 0 or not proxy_distance_mode):
+        raise ValueError("ATR risk sizing requires proxy mode, positive ATR multiplier and risk fraction between 0 and 1")
     start = pd.to_datetime(start_time, utc=True, errors='raise')
-    frame = prepare_bracket_signals(ohlcv_df, backend)
+    frame = prepare_bracket_signals(ohlcv_df, backend) if prepared_signals is None else prepared_signals.copy()
     frame = frame.loc[frame.index >= start].copy()
     if frame.empty:
         raise ValueError("No completed candles in the requested forward period")
@@ -59,23 +208,67 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
     max_drawdown = total_fees = 0.0
     pending = position = None
     trades = []
-    ignored_signals = rejected_entries = 0
+    ignored_signals = rejected_entries = rejected_cost = rejected_unaffordable = 0
     signals = frame['signal'].to_numpy(dtype=int)
     atr = frame['atr'].to_numpy(dtype=float)
+    if dynamic_forecast:
+        forecast_prices = frame['predicted_price'].to_numpy(dtype=float)
+        forecast_horizons = frame['horizon'].to_numpy(dtype=float)
+    if proxy_distance_mode:
+        proxy_displacements = frame['proxy_displacement'].to_numpy(dtype=float)
+        forecast_horizons = frame['horizon'].to_numpy(dtype=float)
+        low_interval = pd.Timedelta(timeframe)
     for i, (open_price, high, low, close) in enumerate(prices):
         if pending is not None:
-            side, signal_atr, signal_time = pending
+            side, signal_atr, signal_time, forecast_price, forecast_horizon = pending
             pending = None
-            stop = open_price - side * backend.sl_atr * signal_atr
-            target = open_price + side * backend.tp_atr * signal_atr
-            entry_fee = position_value * commission
-            quantity = position_value / open_price
+            if risk_fraction is not None:
+                stop_distance = stop_atr_multiplier * signal_atr
+                stop = open_price - side * stop_distance
+                distance = reward_risk * stop_distance
+                target = open_price + side * distance
+                max_bars = int(forecast_horizon)
+            elif proxy_distance_mode:
+                distance = side * forecast_price
+                target = open_price + side * distance
+                stop = open_price - side * distance / reward_risk
+                max_bars = int(forecast_horizon)
+            elif dynamic_forecast:
+                target = forecast_price
+                distance = side * (target - open_price)
+                stop = open_price - side * distance / reward_risk
+                max_bars = int(forecast_horizon)
+            else:
+                stop = open_price - side * backend.sl_atr * signal_atr
+                target = open_price + side * backend.tp_atr * signal_atr
+                distance = side * (target - open_price)
+                max_bars = backend.max_bars
+            if risk_fraction is not None:
+                # Budget includes the entry fee and estimated exit fee at the stop.
+                risk_per_unit = stop_distance + commission * (open_price + stop)
+                quantity = balance * risk_fraction / risk_per_unit if risk_per_unit > 0 else 0.0
+                order_value = quantity * open_price
+            else:
+                order_value = position_value
+                quantity = order_value / open_price
+            entry_fee = order_value * commission
             initial_risk = quantity * abs(open_price - stop)
-            if stop > 0 and target > 0 and initial_risk > 0 and balance >= position_value + entry_fee:
+            # A profitable target must at least cover the entry and exit fees.
+            # This is a break-even condition, not a profitability guarantee.
+            cost_exceeds_reward = ((dynamic_forecast or proxy_distance_mode) and distance > 0 and
+                                   distance <= commission * (open_price + target))
+            if cost_exceeds_reward:
+                rejected_cost += 1
+            has_immediate_entry = not proxy_distance_mode or frame.index[i] == signal_time
+            if order_value + entry_fee > balance:
+                rejected_unaffordable += 1
+            if (has_immediate_entry and not cost_exceeds_reward and stop > 0 and target > 0 and distance > 0
+                    and initial_risk > 0 and balance >= order_value + entry_fee):
                 position = {'side': side, 'entry': open_price, 'entry_index': i,
                             'entry_time': frame.index[i], 'signal_time': signal_time,
                             'quantity': quantity, 'initial_risk': initial_risk, 'stop': stop,
-                            'target': target, 'entry_fee': entry_fee}
+                            'target': target, 'entry_fee': entry_fee, 'max_bars': max_bars,
+                            'planned_stop_loss': initial_risk + entry_fee + quantity * stop * commission}
                 balance -= entry_fee
                 total_fees += entry_fee
             else:
@@ -96,7 +289,7 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
                     exit_price, reason = stop, 'SL'
                 elif target_hit:
                     exit_price, reason = target, 'TP'
-                elif i - position['entry_index'] + 1 >= backend.max_bars:
+                elif i - position['entry_index'] + 1 >= position['max_bars']:
                     exit_price, reason = close, 'TIMEOUT'
             if reason is not None:
                 gross = side * position['quantity'] * (exit_price - position['entry'])
@@ -109,6 +302,8 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
                                'entry': float(position['entry']), 'exit': float(exit_price),
                                'stop': float(stop), 'target': float(target), 'reason': reason,
                                'initial_risk': float(position['initial_risk']),
+                               'quantity': float(position['quantity']),
+                               'planned_stop_loss': float(position['planned_stop_loss']),
                                'gross_pnl': float(gross), 'commission': float(position['entry_fee'] + exit_fee),
                                'net_pnl': float(net), 'gross_r': float(gross / position['initial_risk']),
                                'commission_r': float((position['entry_fee'] + exit_fee) / position['initial_risk']),
@@ -124,7 +319,16 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
             if position is not None:
                 ignored_signals += 1
             elif i + 1 < len(frame):
-                pending = (signals[i], atr[i], frame.index[i])
+                if proxy_distance_mode:
+                    if ((risk_fraction is not None or np.isfinite(proxy_displacements[i])) and np.isfinite(forecast_horizons[i])
+                            and forecast_horizons[i] >= 1 and forecast_horizons[i].is_integer()):
+                        pending = (signals[i], atr[i], frame.index[i] + low_interval,
+                                   proxy_displacements[i], forecast_horizons[i])
+                elif not dynamic_forecast:
+                    pending = (signals[i], atr[i], frame.index[i], None, None)
+                elif (np.isfinite(forecast_prices[i]) and np.isfinite(forecast_horizons[i])
+                      and forecast_horizons[i] >= 1 and forecast_horizons[i].is_integer()):
+                    pending = (signals[i], atr[i], frame.index[i], forecast_prices[i], forecast_horizons[i])
 
     wins = sum(t['net_pnl'] > 0 for t in trades)
     losses = sum(t['net_pnl'] < 0 for t in trades)
@@ -138,6 +342,8 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
         'candles': len(frame), 'long_signals': int((signals == 1).sum()),
         'short_signals': int((signals == -1).sum()), 'ignored_signals': ignored_signals,
         'rejected_entries': rejected_entries, 'closed_trades': len(trades),
+        'rejected_unaffordable': rejected_unaffordable,
+        'rejected_cost': rejected_cost,
         'wins': wins, 'losses': losses, 'win_rate_pct': 100 * wins / len(trades) if trades else None,
         'exit_counts': counts, 'gross_closed_pnl': sum(t['gross_pnl'] for t in trades),
         'net_closed_pnl': sum(t['net_pnl'] for t in trades), 'total_commission': total_fees,
@@ -150,7 +356,22 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
     }
     print(f"\n=== {symbol} {timeframe} forward bracket backtest ===")
     print(f"Period: {result['start']} to {result['end']} | Candles: {len(frame)}")
+    print("Trade details (gain is net of commission):")
+    for trade in trades:
+        print(f"[{trade['side'].title()}]: Open={trade['entry']:.8f}   "
+              f"TP={trade['target']:.8f}   SL={trade['stop']:.8f}   "
+              f"Close={trade['exit']:.8f}   Gain=${trade['net_pnl']:+.2f}")
+    if position is not None:
+        side = 'Long' if position['side'] == 1 else 'Short'
+        open_net = unrealized - position['entry_fee']
+        print(f"[{side}]: Open={position['entry']:.8f}   TP={position['target']:.8f}   "
+              f"SL={position['stop']:.8f}   Close=OPEN   "
+              f"Gain=${open_net:+.2f} (unrealized; entry commission included)")
     print(f"Signals: {result['long_signals']} long, {result['short_signals']} short; ignored while open: {ignored_signals}")
+    if dynamic_forecast or proxy_distance_mode:
+        print(f"Rejected entries: {rejected_entries} (including {rejected_cost} whose target did not cover commission)")
+        if risk_fraction is not None:
+            print(f"Rejected for insufficient unleveraged cash: {rejected_unaffordable}")
     print(f"Closed trades: {len(trades)} | Wins: {wins} | Losses: {losses} | "
           f"Win rate: {result['win_rate_pct']:.2f}%" if trades else "Closed trades: 0 | Win rate: N/A")
     print(f"Exits: TP={counts['TP']}, SL={counts['SL']}, timeout={counts['TIMEOUT']}")

@@ -1,6 +1,7 @@
 import argparse
 import pathlib
 import sys
+from datetime import datetime
 
 import pandas as pd
 
@@ -8,24 +9,18 @@ SRC_DIR = pathlib.Path(__file__).resolve().parent
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from backtest import run_bracket_backtest
-from models.XGBoost import XGBoostModel, load_data
+from models.XGBoost import XGBoostModel, compute_features, load_data
+from backtest import prepare_multitimeframe_proxy_signals, run_bracket_backtest, plot_backtest_positions
 
 parent_dir = SRC_DIR.parent
 dataset_dir = parent_dir / "datapoints"
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train and forward-backtest the XGBoost bracket classifier")
+    parser = argparse.ArgumentParser(description="Train and evaluate a market prediction model")
     parser.add_argument("--symbol", type=str, default="BTC", help="Trading symbol (e.g., BTC)")
     parser.add_argument("--timeframe", type=str, default="1h", help="Candle timeframe (e.g., 1h)")
-    parser.add_argument(
-        "--test-end",
-        type=str,
-        default=None,
-        help="Optional UTC cutoff for train/test data; candles after this are used for forward backtesting",
-    )
-    parser.add_argument("--commission", type=float, default=0.001, help="Per-side commission rate (e.g., 0.001 = 0.1)")
+    parser.add_argument("--test-end", type=str, default=None, help="Optional UTC cutoff for completed training and test candles",)
     args = parser.parse_args()
 
     csv_path = dataset_dir / args.symbol / f"{args.symbol}_{args.timeframe}.csv"
@@ -41,11 +36,8 @@ def main():
     if args.test_end:
         test_end = pd.to_datetime(args.test_end, utc=True, errors="raise")
         dev_source = source_data.loc[source_data.index + candle_length <= test_end].copy()
-        fwd_source = source_data.loc[source_data.index >= test_end].copy()
     else:
-        split_idx = int(len(source_data) * 0.85)
-        dev_source = source_data.iloc[:split_idx].copy()
-        fwd_source = source_data.iloc[split_idx:].copy()
+        dev_source = source_data
 
     if len(dev_source) < 100:
         raise ValueError(f"Not enough candles to train XGBoost model ({len(dev_source)} rows)")
@@ -56,27 +48,36 @@ def main():
     test_data = dev_source.iloc[split_at:].copy()
 
     # 3. Initialize, engineer features, train, test, and save accuracy report
-    backend = XGBoostModel(
-        symbol=args.symbol,
-        timeframe=args.timeframe,
-    )
+    backend = XGBoostModel(symbol=args.symbol, timeframe=args.timeframe,)
     backend.feature_engineering(train_data, test_data)
     backend.train()
     backend.test()
     backend.evaluate()
 
-    # 4. Warm indicators with prior candles, but trade only the forward slice.
-    if fwd_source.empty:
-        print("No completed forward candles after the cutoff; forward backtest skipped.")
+    # The model is fitted only on training candles. The 15-minute test starts
+    # at the original higher-timeframe holdout, with no later candles included.
+    execution_timeframe = '15m'
+    if candle_length <= pd.Timedelta(execution_timeframe) or candle_length % pd.Timedelta(execution_timeframe):
+        print("15-minute backtest skipped: model timeframe must be a larger whole multiple of 15 minutes.")
         return
-    run_bracket_backtest(
-        symbol=args.symbol,
-        timeframe=args.timeframe,
-        ohlcv_df=source_data,
-        backend=backend,
-        start_time=fwd_source.index[0],
-        commission=args.commission,
-    )
+    execution_path = dataset_dir / args.symbol / f"{args.symbol}_{execution_timeframe}.csv"
+    if not execution_path.exists():
+        print(f"15-minute backtest skipped: data file not found: {execution_path}")
+        return
+    low = load_data(execution_path)
+    cutoff = dev_source.index[-1] + candle_length
+    low = low.loc[(low.index >= test_data.index[0]) & (low.index + pd.Timedelta(execution_timeframe) <= cutoff)].copy()
+    signals = prepare_multitimeframe_proxy_signals(dev_source, low, backend, args.timeframe, execution_timeframe)
+    print(f"Backtest: {args.timeframe} closed-candle signals; {execution_timeframe} execution; "
+          "2 ATR stop, 2:1 target-to-stop, 1% equity risk including estimated stop fees, 0.1% per side")
+    result = run_bracket_backtest(args.symbol, execution_timeframe, low, backend, test_data.index[0],
+                                 prepared_signals=signals, reward_risk=2.5, proxy_distance_mode=True,
+                                 risk_fraction=0.04, stop_atr_multiplier=8.5)
+    stamp = datetime.now().strftime('%Y%m%dT%H%M%S%f')
+    for suffix, days in (('full', None), ('recent_30_days', 30)):
+        path = parent_dir / 'results' / f'backtest_{args.symbol}_{args.timeframe}_{execution_timeframe}_{suffix}_{stamp}.png'
+        plot_backtest_positions(signals, result, path, execution_timeframe, recent_days=days)
+        print(f"Backtest chart saved: {path}")
 
 if __name__ == "__main__":
     main()
