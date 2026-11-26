@@ -3,6 +3,11 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+try:
+    from strategy import compute_trade_ev
+except ImportError:
+    from src.strategy import compute_trade_ev
+
 
 def prepare_bracket_signals(ohlcv_df, backend):
     """Build causal classifier signals and signal-candle ATR from full history."""
@@ -46,27 +51,30 @@ def prepare_multitimeframe_proxy_signals(higher_ohlcv, lower_ohlcv, backend,
         raise ValueError('Higher timeframe must be an exact multiple of the lower timeframe')
     higher = _normalize_ohlcv(higher_ohlcv)
     lower = _normalize_ohlcv(lower_ohlcv)
-    high_signals = prepare_bracket_signals(higher, backend)
-    proxy = backend.predict_next_candle(higher)
-    displacement = proxy - higher['Close']
+    high_signals = prepare_price_signals(higher, backend)
+    prediction = high_signals['predicted_price']
+    displacement = prediction - higher['Close']
     signal_time = higher.index + high_interval
     signals = pd.DataFrame({'signal': high_signals['signal'].to_numpy(),
                             'proxy_displacement': displacement.to_numpy(),
-                            'price_proxy': proxy.to_numpy(),
+                            'predicted_price': prediction.to_numpy(),
+                            'prediction_origin_price': higher['Close'].to_numpy(),
                             'atr': high_signals['atr'].to_numpy()}, index=signal_time)
     result = lower.copy()
     events = signals.reindex(lower.index + low_interval)
     result['signal'] = events['signal'].fillna(0).to_numpy(dtype=int)
     result['proxy_displacement'] = events['proxy_displacement'].to_numpy(dtype=float)
-    result['price_proxy'] = events['price_proxy'].to_numpy(dtype=float)
+    result['predicted_price'] = events['predicted_price'].to_numpy(dtype=float)
+    result['prediction_origin_price'] = events['prediction_origin_price'].to_numpy(dtype=float)
     result['atr'] = events['atr'].to_numpy(dtype=float)
     result['horizon'] = backend.max_bars * int(high_interval / low_interval)
     return result
 
 
-def plot_backtest_positions(frame, result, path, timeframe, recent_days=None):
-    """Plot closes, the signal-time proxy, and entry-to-exit trade rectangles."""
+def plot_backtest_positions(frame, result, path, timeframe, recent_days=None, prediction_timeframe=None):
+    """Plot actual closes, next-candle price forecasts and trade rectangles."""
     from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from matplotlib.collections import LineCollection
     from matplotlib.dates import date2num
     from matplotlib.figure import Figure
     from matplotlib.patches import Patch, Rectangle
@@ -84,10 +92,20 @@ def plot_backtest_positions(frame, result, path, timeframe, recent_days=None):
     shown = frame.loc[frame.index + interval >= start]
     ax.plot(shown.index + interval, shown['Close'], color='#222222', linewidth=.8,
             label=f'Actual {timeframe} close', zorder=2)
-    if 'price_proxy' in shown:
-        valid = shown['price_proxy'].notna()
-        ax.scatter(shown.index[valid] + interval, shown.loc[valid, 'price_proxy'],
-                   s=5, color='#356ac3', alpha=.55, label='Higher-timeframe signal-time price proxy', zorder=3)
+    if 'predicted_price' in shown and 'prediction_origin_price' in shown:
+        valid = (shown['predicted_price'].notna() & shown['prediction_origin_price'].notna())
+        times = shown.index[valid] + interval
+        forecast_times = times + pd.Timedelta(prediction_timeframe or timeframe)
+        origin = shown.loc[valid, 'prediction_origin_price'].to_numpy(dtype=float)
+        forecast = shown.loc[valid, 'predicted_price'].to_numpy(dtype=float)
+        xs = date2num(times.to_pydatetime())
+        future_xs = date2num(forecast_times.to_pydatetime())
+        segments = np.stack((np.column_stack((xs, origin)), np.column_stack((future_xs, forecast))), axis=1)
+        ax.add_collection(LineCollection(segments, colors='#356ac3', linewidths=.8, alpha=.7, zorder=3))
+        ax.scatter(times, origin, s=12, color='#e18a11', alpha=.8,
+                   label='Prediction time and higher-timeframe close', zorder=4)
+        ax.scatter(forecast_times, forecast, s=12, color='#356ac3', alpha=.8,
+                   label='Predicted next higher-timeframe close', zorder=4)
 
     def draw_rectangle(entry_time, exit_time, entry, exit_price, color, dashed=False):
         left = max(entry_time, start)
@@ -111,7 +129,7 @@ def plot_backtest_positions(frame, result, path, timeframe, recent_days=None):
         position = result['open_position']
         draw_rectangle(position['entry_time'], end, position['entry'], frame['Close'].iloc[-1], '#e3981a', True)
     ax.set_xlim(start, end)
-    ax.set_title(f"{result['symbol']} backtest — actual price, direction-implied proxy and positions\n"
+    ax.set_title(f"{result['symbol']} backtest — actual price, next-close forecasts and positions\n"
                  'Position rectangle: entry to exit candle; height: entry to exit price')
     ax.set_xlabel('Time (UTC)')
     ax.set_ylabel('Price')
@@ -178,9 +196,10 @@ def prepare_adaptive_signals(ohlcv_df, backend):
 
 
 def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
-                         initial_cash=1000.0, position_value=1000.0, commission=0.001,
+                         initial_cash=1000.0, position_value=1000.0, commission=0.0001,
                          prepared_signals=None, dynamic_forecast=False, reward_risk=2.0,
-                         proxy_distance_mode=False, risk_fraction=None, stop_atr_multiplier=None):
+                         proxy_distance_mode=False, risk_fraction=None, stop_atr_multiplier=None,
+                         min_ev_r=0.0, verbose=True, print_trades=True):
     """Trade bracket probabilities at the next open using conservative OHLC fills.
 
     The final open position is marked at the last close; it is not forcibly sold.
@@ -208,9 +227,11 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
     max_drawdown = total_fees = 0.0
     pending = position = None
     trades = []
-    ignored_signals = rejected_entries = rejected_cost = rejected_unaffordable = 0
+    ignored_signals = rejected_entries = rejected_cost = rejected_unaffordable = rejected_ev = 0
     signals = frame['signal'].to_numpy(dtype=int)
     atr = frame['atr'].to_numpy(dtype=float)
+    probabilities = (frame['probability'].to_numpy(dtype=float)
+                     if 'probability' in frame.columns else np.full(len(frame), np.nan, dtype=float))
     if dynamic_forecast:
         forecast_prices = frame['predicted_price'].to_numpy(dtype=float)
         forecast_horizons = frame['horizon'].to_numpy(dtype=float)
@@ -220,13 +241,13 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
         low_interval = pd.Timedelta(timeframe)
     for i, (open_price, high, low, close) in enumerate(prices):
         if pending is not None:
-            side, signal_atr, signal_time, forecast_price, forecast_horizon = pending
+            side, signal_atr, signal_time, forecast_price, forecast_horizon, signal_prob = pending
             pending = None
             if risk_fraction is not None:
                 stop_distance = stop_atr_multiplier * signal_atr
                 stop = open_price - side * stop_distance
-                distance = reward_risk * stop_distance
-                target = open_price + side * distance
+                target = open_price + side * reward_risk * stop_distance
+                distance = side * (target - open_price)
                 max_bars = int(forecast_horizon)
             elif proxy_distance_mode:
                 distance = side * forecast_price
@@ -253,6 +274,18 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
                 quantity = order_value / open_price
             entry_fee = order_value * commission
             initial_risk = quantity * abs(open_price - stop)
+            # Exact fee-adjusted EV gate in R-multiples when calibrated probability is available:
+            # EV = ((|TP - e| / |SL - e|) + 1) * p - 1 - (p * c * (TP + e) + (1 - p) * c * (e + SL)) / |e - SL|
+            expected_ev_r = None
+            p_win = None
+            ev_rejected = False
+            if np.isfinite(signal_prob) and stop > 0 and target > 0 and abs(open_price - stop) > 0:
+                p_win = float(signal_prob if side == 1 else (1.0 - signal_prob))
+                p_win = float(np.clip(p_win, 0.0, 1.0))
+                expected_ev_r = compute_trade_ev(open_price, target, stop, p_win, commission=commission)
+                if min_ev_r is not None and expected_ev_r <= float(min_ev_r):
+                    ev_rejected = True
+                    rejected_ev += 1
             # A profitable target must at least cover the entry and exit fees.
             # This is a break-even condition, not a profitability guarantee.
             cost_exceeds_reward = ((dynamic_forecast or proxy_distance_mode) and distance > 0 and
@@ -262,12 +295,13 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
             has_immediate_entry = not proxy_distance_mode or frame.index[i] == signal_time
             if order_value + entry_fee > balance:
                 rejected_unaffordable += 1
-            if (has_immediate_entry and not cost_exceeds_reward and stop > 0 and target > 0 and distance > 0
-                    and initial_risk > 0 and balance >= order_value + entry_fee):
+            if (has_immediate_entry and not cost_exceeds_reward and not ev_rejected and stop > 0 and target > 0
+                    and distance > 0 and initial_risk > 0 and balance >= order_value + entry_fee):
                 position = {'side': side, 'entry': open_price, 'entry_index': i,
                             'entry_time': frame.index[i], 'signal_time': signal_time,
                             'quantity': quantity, 'initial_risk': initial_risk, 'stop': stop,
                             'target': target, 'entry_fee': entry_fee, 'max_bars': max_bars,
+                            'model_prob': p_win, 'expected_ev_r': expected_ev_r,
                             'planned_stop_loss': initial_risk + entry_fee + quantity * stop * commission}
                 balance -= entry_fee
                 total_fees += entry_fee
@@ -304,6 +338,8 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
                                'initial_risk': float(position['initial_risk']),
                                'quantity': float(position['quantity']),
                                'planned_stop_loss': float(position['planned_stop_loss']),
+                               'model_prob': position['model_prob'],
+                               'expected_ev_r': position['expected_ev_r'],
                                'gross_pnl': float(gross), 'commission': float(position['entry_fee'] + exit_fee),
                                'net_pnl': float(net), 'gross_r': float(gross / position['initial_risk']),
                                'commission_r': float((position['entry_fee'] + exit_fee) / position['initial_risk']),
@@ -323,12 +359,12 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
                     if ((risk_fraction is not None or np.isfinite(proxy_displacements[i])) and np.isfinite(forecast_horizons[i])
                             and forecast_horizons[i] >= 1 and forecast_horizons[i].is_integer()):
                         pending = (signals[i], atr[i], frame.index[i] + low_interval,
-                                   proxy_displacements[i], forecast_horizons[i])
+                                   proxy_displacements[i], forecast_horizons[i], probabilities[i])
                 elif not dynamic_forecast:
-                    pending = (signals[i], atr[i], frame.index[i], None, None)
+                    pending = (signals[i], atr[i], frame.index[i], None, None, probabilities[i])
                 elif (np.isfinite(forecast_prices[i]) and np.isfinite(forecast_horizons[i])
                       and forecast_horizons[i] >= 1 and forecast_horizons[i].is_integer()):
-                    pending = (signals[i], atr[i], frame.index[i], forecast_prices[i], forecast_horizons[i])
+                    pending = (signals[i], atr[i], frame.index[i], forecast_prices[i], forecast_horizons[i], probabilities[i])
 
     wins = sum(t['net_pnl'] > 0 for t in trades)
     losses = sum(t['net_pnl'] < 0 for t in trades)
@@ -337,6 +373,8 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
     loss_r = sum(min(t['gross_r'], 0.0) for t in trades)
     commission_r = sum(t['commission_r'] for t in trades)
     total_r = sum(t['net_r'] for t in trades)
+    ev_values = [t['expected_ev_r'] for t in trades if t['expected_ev_r'] is not None]
+    avg_expected_ev_r = float(np.mean(ev_values)) if ev_values else None
     result = {
         'symbol': symbol, 'timeframe': timeframe, 'start': frame.index[0], 'end': frame.index[-1],
         'candles': len(frame), 'long_signals': int((signals == 1).sum()),
@@ -344,6 +382,8 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
         'rejected_entries': rejected_entries, 'closed_trades': len(trades),
         'rejected_unaffordable': rejected_unaffordable,
         'rejected_cost': rejected_cost,
+        'rejected_ev': rejected_ev,
+        'avg_expected_ev_r': avg_expected_ev_r,
         'wins': wins, 'losses': losses, 'win_rate_pct': 100 * wins / len(trades) if trades else None,
         'exit_counts': counts, 'gross_closed_pnl': sum(t['gross_pnl'] for t in trades),
         'net_closed_pnl': sum(t['net_pnl'] for t in trades), 'total_commission': total_fees,
@@ -354,31 +394,37 @@ def run_bracket_backtest(symbol, timeframe, ohlcv_df, backend, start_time,
         'return_pct': 100 * (equity / initial_cash - 1),
         'max_close_drawdown_pct': 100 * max_drawdown, 'trades': trades,
     }
-    print(f"\n=== {symbol} {timeframe} forward bracket backtest ===")
-    print(f"Period: {result['start']} to {result['end']} | Candles: {len(frame)}")
-    print("Trade details (gain is net of commission):")
-    for trade in trades:
-        print(f"[{trade['side'].title()}]: Open={trade['entry']:.8f}   "
-              f"TP={trade['target']:.8f}   SL={trade['stop']:.8f}   "
-              f"Close={trade['exit']:.8f}   Gain=${trade['net_pnl']:+.2f}")
-    if position is not None:
-        side = 'Long' if position['side'] == 1 else 'Short'
-        open_net = unrealized - position['entry_fee']
-        print(f"[{side}]: Open={position['entry']:.8f}   TP={position['target']:.8f}   "
-              f"SL={position['stop']:.8f}   Close=OPEN   "
-              f"Gain=${open_net:+.2f} (unrealized; entry commission included)")
-    print(f"Signals: {result['long_signals']} long, {result['short_signals']} short; ignored while open: {ignored_signals}")
-    if dynamic_forecast or proxy_distance_mode:
-        print(f"Rejected entries: {rejected_entries} (including {rejected_cost} whose target did not cover commission)")
-        if risk_fraction is not None:
-            print(f"Rejected for insufficient unleveraged cash: {rejected_unaffordable}")
-    print(f"Closed trades: {len(trades)} | Wins: {wins} | Losses: {losses} | "
-          f"Win rate: {result['win_rate_pct']:.2f}%" if trades else "Closed trades: 0 | Win rate: N/A")
-    print(f"Exits: TP={counts['TP']}, SL={counts['SL']}, timeout={counts['TIMEOUT']}")
-    print(f"Closed trades — Gain: {gain_r:+.2f}R | Loss: {loss_r:+.2f}R | "
-          f"Commission: {-commission_r:+.2f}R | Total: {total_r:+.2f}R")
-    print(f"Open position: {'yes' if position else 'no'} | Unrealized gross P&L: ${unrealized:.2f}")
-    print(f"Initial: ${initial_cash:.2f} | Final equity: ${equity:.2f} | Return: {result['return_pct']:+.2f}% | Close-to-close max drawdown: {result['max_close_drawdown_pct']:.2f}%")
+    if verbose:
+        print(f"\n=== {symbol} {timeframe} forward bracket backtest ===")
+        print(f"Period: {result['start']} to {result['end']} | Candles: {len(frame)}")
+        if print_trades:
+            print("Trade details (gain is net of commission):")
+            for trade in trades:
+                ev_note = f"   EV={trade['expected_ev_r']:+.3f}R" if trade['expected_ev_r'] is not None else ""
+                print(f"[{trade['side'].title()}]: Open={trade['entry']:.8f}   "
+                      f"TP={trade['target']:.8f}   SL={trade['stop']:.8f}   "
+                      f"Close={trade['exit']:.8f}   Gain=${trade['net_pnl']:+.2f}{ev_note}")
+            if position is not None:
+                side = 'Long' if position['side'] == 1 else 'Short'
+                open_net = unrealized - position['entry_fee']
+                print(f"[{side}]: Open={position['entry']:.8f}   TP={position['target']:.8f}   "
+                      f"SL={position['stop']:.8f}   Close=OPEN   "
+                      f"Gain=${open_net:+.2f} (unrealized; entry commission included)")
+        print(f"Signals: {result['long_signals']} long, {result['short_signals']} short; ignored while open: {ignored_signals}")
+        if rejected_ev > 0:
+            print(f"Rejected by EV gate (EV <= {min_ev_r:+.3f}R at c={commission:.5f}): {rejected_ev}")
+        if dynamic_forecast or proxy_distance_mode:
+            print(f"Rejected entries: {rejected_entries} (including {rejected_cost} whose target did not cover commission)")
+            if risk_fraction is not None:
+                print(f"Rejected for insufficient unleveraged cash: {rejected_unaffordable}")
+        print(f"Closed trades: {len(trades)} | Wins: {wins} | Losses: {losses} | "
+              f"Win rate: {result['win_rate_pct']:.2f}%" if trades else "Closed trades: 0 | Win rate: N/A")
+        print(f"Exits: TP={counts['TP']}, SL={counts['SL']}, timeout={counts['TIMEOUT']}")
+        ev_summary = f" | Avg expected EV: {avg_expected_ev_r:+.3f}R" if avg_expected_ev_r is not None else ""
+        print(f"Closed trades — Gain: {gain_r:+.2f}R | Loss: {loss_r:+.2f}R | "
+              f"Commission: {-commission_r:+.2f}R | Total: {total_r:+.2f}R{ev_summary}")
+        print(f"Open position: {'yes' if position else 'no'} | Unrealized gross P&L: ${unrealized:.2f}")
+        print(f"Initial: ${initial_cash:.2f} | Final equity: ${equity:.2f} | Return: {result['return_pct']:+.2f}% | Close-to-close max drawdown: {result['max_close_drawdown_pct']:.2f}%")
     return result
 
 
@@ -400,7 +446,7 @@ class NextCandleStrategy(bt.Strategy):
         ("risk_per_trade", 25.0),
         ("max_stake", 2500.0),
         ("max_hold_bars", 12),
-        ("commission", 0.001),
+        ("commission", 0.0001),
         ("min_tp_pct", 0.002),
         ("min_tp_fee_mult", 2.0),
     )
@@ -639,7 +685,7 @@ def _prepare_feed_frame(
     rr_ratio: float = 2.0,
     min_tp_pct: float = 0.002,
     max_tp_pct: float = 0.05,
-    commission: float = 0.001,
+    commission: float = 0.0001,
     min_tp_fee_mult: float = 2.0,
     atr_pct_series: pd.Series | None = None,
     min_sl_atr_mult: float = 0.0,
@@ -723,7 +769,7 @@ def run_displacement_backtest(
     risk_per_trade: float = 25.0,
     max_stake: float = 2500.0,
     max_hold_bars: int = 12,
-    commission: float = 0.001,
+    commission: float = 0.0001,
     rr_ratio: float = 2.0,
     min_tp_pct: float = 0.002,
     max_tp_pct: float = 0.05,
@@ -794,3 +840,294 @@ def run_displacement_backtest(
         f"Return: {ret_pct:+.2f}% | MaxDD: {max_dd:.2f}% | Comm: ${strat.total_commission:.2f}"
     )
     return summary
+
+
+def _compute_atr_series(ohlcv_df: pd.DataFrame, period: int = 14) -> pd.Series:
+    previous = ohlcv_df["Close"].astype(float).shift(1)
+    true_range = pd.concat(
+        [
+            (ohlcv_df["High"].astype(float) - ohlcv_df["Low"].astype(float)),
+            (ohlcv_df["High"].astype(float) - previous).abs(),
+            (ohlcv_df["Low"].astype(float) - previous).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
+    return true_range.rolling(period, min_periods=period).mean()
+
+
+def _simulate_bracket_hit_outcomes(
+    ohlcv_df: pd.DataFrame,
+    sides: np.ndarray,
+    atr: np.ndarray,
+    sl_atr: float,
+    tp_atr: float,
+    max_bars: int,
+) -> np.ndarray:
+    """Causal bracket hit labels matching run_bracket_backtest fills (next-open entry, SL-first)."""
+    opens = ohlcv_df["Open"].to_numpy(dtype=float)
+    highs = ohlcv_df["High"].to_numpy(dtype=float)
+    lows = ohlcv_df["Low"].to_numpy(dtype=float)
+    n = len(ohlcv_df)
+    outcomes = np.full(n, np.nan, dtype=float)
+
+    for i in range(n - 1):
+        side = int(sides[i])
+        if side == 0 or not np.isfinite(atr[i]) or atr[i] <= 0.0:
+            continue
+        entry = opens[i + 1]
+        if not np.isfinite(entry) or entry <= 0.0:
+            continue
+        stop = entry - side * sl_atr * atr[i]
+        target = entry + side * tp_atr * atr[i]
+        if stop <= 0.0 or target <= 0.0:
+            continue
+
+        end_j = min(n, i + 1 + int(max_bars))
+        hit = 0.0
+        for j in range(i + 1, end_j):
+            o_j, h_j, l_j = opens[j], highs[j], lows[j]
+            if (side == 1 and o_j <= stop) or (side == -1 and o_j >= stop):
+                hit = 0.0
+                break
+            if (side == 1 and o_j >= target) or (side == -1 and o_j <= target):
+                hit = 1.0
+                break
+            stop_hit = l_j <= stop if side == 1 else h_j >= stop
+            target_hit = h_j >= target if side == 1 else l_j <= target
+            if stop_hit:
+                hit = 0.0
+                break
+            if target_hit:
+                hit = 1.0
+                break
+        outcomes[i] = hit
+    return outcomes
+
+
+def _build_bracket_calibrator_features(p_up: np.ndarray, sides: np.ndarray) -> np.ndarray:
+    p_dir = np.where(sides == 1, p_up, 1.0 - p_up)
+    p_clip = np.clip(p_dir, 1e-4, 1.0 - 1e-4)
+    logit_dir = np.log(p_clip / (1.0 - p_clip))
+    return np.column_stack([logit_dir, sides.astype(float)])
+
+
+def run_consensus_ev_backtest(
+    symbol: str,
+    timeframe: str,
+    train_ohlcv: pd.DataFrame,
+    test_ohlcv: pd.DataFrame,
+    val_preds_df: pd.DataFrame,
+    test_preds_df: pd.DataFrame,
+    commission: float = 0.0001,
+    min_ev_r: float = 0.0,
+    prob_col: str = "p_meta",
+    initial_cash: float = 10000.0,
+    position_value: float = 10000.0,
+    candidate_brackets: tuple[tuple[float, float, int], ...] = (
+        (1.0, 1.0, 24),
+        (1.5, 1.5, 24),
+        (2.0, 2.0, 24),
+        (1.0, 2.0, 24),
+        (1.5, 2.25, 24),
+        (1.5, 3.0, 24),
+        (2.0, 3.0, 48),
+        (2.0, 4.0, 48),
+    ),
+    unanimous_options: tuple[bool, ...] = (False, True),
+    min_val_trades: int = 15,
+    print_trades: bool = False,
+) -> dict:
+    """Validation-calibrated EV-gated bracket backtest for the 3-model consensus.
+
+    Step 1 (strictly on validation slice inside train_ohlcv):
+      For each candidate (sl_atr, tp_atr, max_bars, require_unanimous), maps the
+      consensus probability to calibrated P(hit TP before SL) using a purged
+      first-half fit / second-half backtest evaluation under the exact fee-adjusted
+      EV gate. Selects the highest net-R candidate without touching test_ohlcv.
+    Step 2 (strictly out-of-sample on test_ohlcv):
+      Refits the 1D bracket probability calibrator on all of validation, freezes
+      the selected bracket + calibrator, and runs run_bracket_backtest() on test_ohlcv.
+    """
+    from types import SimpleNamespace
+    from sklearn.linear_model import LogisticRegression
+    from models.XGBoost import _normalize_ohlcv
+
+    if val_preds_df is None or val_preds_df.empty:
+        raise ValueError("val_preds_df is required to calibrate bracket hit probabilities causally")
+    if test_preds_df is None or test_preds_df.empty:
+        raise ValueError("test_preds_df is required for out-of-sample consensus backtesting")
+
+    train_norm = _normalize_ohlcv(train_ohlcv)
+    test_norm = _normalize_ohlcv(test_ohlcv)
+    full_norm = pd.concat([train_norm, test_norm])
+    full_norm = full_norm[~full_norm.index.duplicated(keep="last")].sort_index()
+    full_atr = _compute_atr_series(full_norm, period=14)
+
+    val_ohlcv = train_norm.loc[train_norm.index >= val_preds_df.index[0]].copy()
+    val_ohlcv["atr"] = full_atr.reindex(val_ohlcv.index)
+    val_aligned = val_preds_df.reindex(val_ohlcv.index)
+
+    test_frame = test_norm.copy()
+    test_frame["atr"] = full_atr.reindex(test_frame.index)
+    test_aligned = test_preds_df.reindex(test_frame.index)
+
+    def _prepare_signals(base_df, preds_df, require_unanimous, calibrator):
+        frame = base_df.copy()
+        p_up = preds_df[prob_col].to_numpy(dtype=float)
+        unanimous = preds_df["unanimous"].fillna(False).to_numpy(dtype=bool)
+        valid = np.isfinite(p_up) & np.isfinite(frame["atr"].to_numpy(dtype=float)) & (frame["atr"].to_numpy(dtype=float) > 0)
+        sides = np.where(valid, np.where(p_up >= 0.5, 1, -1), 0).astype(int)
+        if require_unanimous:
+            sides = np.where(unanimous, sides, 0).astype(int)
+
+        prob_for_bt = np.full(len(frame), np.nan, dtype=float)
+        active = sides != 0
+        if np.any(active):
+            X_cal = _build_bracket_calibrator_features(p_up[active], sides[active])
+            p_hit_tp = calibrator.predict_proba(X_cal)[:, 1]
+            # run_bracket_backtest computes p_win = prob if side == 1 else (1 - prob)
+            prob_for_bt[active] = np.where(sides[active] == 1, p_hit_tp, 1.0 - p_hit_tp)
+
+        frame["signal"] = sides
+        frame["probability"] = prob_for_bt
+        return frame
+
+    def _fit_calibrator(base_df, preds_df, sl_atr, tp_atr, max_bars, require_unanimous):
+        p_up = preds_df[prob_col].to_numpy(dtype=float)
+        unanimous = preds_df["unanimous"].fillna(False).to_numpy(dtype=bool)
+        atr_vals = base_df["atr"].to_numpy(dtype=float)
+        valid = np.isfinite(p_up) & np.isfinite(atr_vals) & (atr_vals > 0)
+        sides = np.where(valid, np.where(p_up >= 0.5, 1, -1), 0).astype(int)
+        if require_unanimous:
+            sides = np.where(unanimous, sides, 0).astype(int)
+        y_hit = _simulate_bracket_hit_outcomes(base_df, sides, atr_vals, sl_atr, tp_atr, max_bars)
+        mask = (sides != 0) & np.isfinite(y_hit)
+        if mask.sum() < 20 or len(np.unique(y_hit[mask])) < 2:
+            return None
+        X_cal = _build_bracket_calibrator_features(p_up[mask], sides[mask])
+        cal = LogisticRegression(C=1.0, max_iter=500, random_state=42)
+        cal.fit(X_cal, y_hit[mask].astype(int))
+        return cal
+
+    n_val = len(val_ohlcv)
+    val_split = int(n_val * 0.50)
+
+    print(
+        f"\n=== Consensus EV-Gated Bracket Selection on Validation "
+        f"({symbol} {timeframe}, c={commission:.5f}/side, min_ev={min_ev_r:+.3f}R) ==="
+    )
+    val_summary = []
+    best_cfg = None
+    best_score = None
+
+    for require_unanimous in unanimous_options:
+        for sl_atr, tp_atr, max_bars in candidate_brackets:
+            fit_end = max(50, val_split - int(max_bars))
+            if fit_end >= val_split or val_split >= n_val - 20:
+                continue
+            cal_val = _fit_calibrator(
+                val_ohlcv.iloc[:fit_end],
+                val_aligned.iloc[:fit_end],
+                sl_atr=sl_atr,
+                tp_atr=tp_atr,
+                max_bars=max_bars,
+                require_unanimous=require_unanimous,
+            )
+            if cal_val is None:
+                continue
+            eval_df = val_ohlcv.iloc[val_split:]
+            eval_preds = val_aligned.iloc[val_split:]
+            sig_df = _prepare_signals(eval_df, eval_preds, require_unanimous, cal_val)
+            cfg = SimpleNamespace(sl_atr=sl_atr, tp_atr=tp_atr, max_bars=int(max_bars))
+            bt_val = run_bracket_backtest(
+                symbol,
+                timeframe,
+                eval_df,
+                cfg,
+                eval_df.index[0],
+                initial_cash=initial_cash,
+                position_value=position_value,
+                commission=commission,
+                prepared_signals=sig_df,
+                min_ev_r=min_ev_r,
+                verbose=False,
+            )
+            entry = {
+                "sl_atr": sl_atr,
+                "tp_atr": tp_atr,
+                "max_bars": int(max_bars),
+                "require_unanimous": bool(require_unanimous),
+                "val_closed_trades": int(bt_val["closed_trades"]),
+                "val_rejected_ev": int(bt_val["rejected_ev"]),
+                "val_win_rate_pct": bt_val["win_rate_pct"],
+                "val_net_r": float(bt_val["closed_net_r"]),
+                "val_return_pct": float(bt_val["return_pct"]),
+                "val_max_dd_pct": float(bt_val["max_close_drawdown_pct"]),
+            }
+            val_summary.append(entry)
+            wr_str = f"{bt_val['win_rate_pct']:.1f}%" if bt_val["win_rate_pct"] is not None else "N/A"
+            print(
+                f"  SL={sl_atr:.2f} TP={tp_atr:.2f} H={max_bars:2d} unan={str(require_unanimous):5s} | "
+                f"trades={bt_val['closed_trades']:3d} (rej_ev={bt_val['rejected_ev']:4d}) | "
+                f"WR={wr_str:>5s} | Net={bt_val['closed_net_r']:+6.2f}R | "
+                f"Ret={bt_val['return_pct']:+6.2f}% | MaxDD={bt_val['max_close_drawdown_pct']:.2f}%"
+            )
+
+            eligible = bt_val["closed_trades"] >= min_val_trades
+            score = (
+                1 if eligible else 0,
+                float(bt_val["closed_net_r"]),
+                -float(bt_val["max_close_drawdown_pct"]),
+            )
+            if best_score is None or score > best_score:
+                best_score = score
+                best_cfg = (sl_atr, tp_atr, max_bars, require_unanimous)
+
+    if best_cfg is None:
+        raise RuntimeError("No valid bracket configuration could be calibrated on the validation split")
+
+    sel_sl, sel_tp, sel_bars, sel_unan = best_cfg
+    print(
+        f"\nSelected on validation -> SL={sel_sl:.2f} ATR, TP={sel_tp:.2f} ATR, "
+        f"max_bars={sel_bars}, require_unanimous={sel_unan}"
+    )
+
+    # Refit calibrator on full validation slice (still strictly before test_ohlcv)
+    final_cal = _fit_calibrator(
+        val_ohlcv,
+        val_aligned,
+        sl_atr=sel_sl,
+        tp_atr=sel_tp,
+        max_bars=sel_bars,
+        require_unanimous=sel_unan,
+    )
+    if final_cal is None:
+        raise RuntimeError("Failed to refit final bracket calibrator on full validation slice")
+
+    test_signals = _prepare_signals(test_frame, test_aligned, sel_unan, final_cal)
+    final_cfg = SimpleNamespace(sl_atr=sel_sl, tp_atr=sel_tp, max_bars=int(sel_bars))
+    test_result = run_bracket_backtest(
+        symbol,
+        timeframe,
+        test_frame,
+        final_cfg,
+        test_frame.index[0],
+        initial_cash=initial_cash,
+        position_value=position_value,
+        commission=commission,
+        prepared_signals=test_signals,
+        min_ev_r=min_ev_r,
+        verbose=True,
+        print_trades=print_trades,
+    )
+    test_result["selected_bracket"] = {
+        "sl_atr": sel_sl,
+        "tp_atr": sel_tp,
+        "max_bars": int(sel_bars),
+        "require_unanimous": bool(sel_unan),
+        "prob_col": prob_col,
+        "commission": float(commission),
+        "min_ev_r": float(min_ev_r),
+    }
+    test_result["validation_grid"] = val_summary
+    return test_result, test_signals
