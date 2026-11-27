@@ -1,0 +1,2318 @@
+[
+  {
+    "group": "crypto",
+    "symbol": "BTC",
+    "entry_session": "weekdays",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 0.0001,
+    "elapsed_s": 81.2,
+    "trades": 21,
+    "win_rate_pct": 23.81,
+    "profit_factor": 0.73,
+    "net_r": -4.36,
+    "return_pct": -4.3,
+    "max_dd_pct": 8.65,
+    "avg_test_auc": 0.5856,
+    "avg_test_bal_acc_pct": 51.27,
+    "avg_expected_ev_r": 0.182,
+    "avg_realized_r": -0.208,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 13727,
+    "rejected_stand_down": 0,
+    "rejected_comm": 14983,
+    "rejected_ev": 19130,
+    "by_side": {
+      "LONG": {
+        "trades": 2,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.0925849208345957
+      },
+      "SHORT": {
+        "trades": 19,
+        "tp_rate_pct": 26.31578947368421,
+        "win_rate_pct": 26.31578947368421,
+        "net_r": -2.270584867076326
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 1,
+        "shorts": 2,
+        "win_rate_pct": 0.0,
+        "net_r": -3.1331570848988104
+      },
+      "BEAR_30D": {
+        "trades": 18,
+        "longs": 1,
+        "shorts": 17,
+        "win_rate_pct": 27.77777777777778,
+        "net_r": -1.2300127030121113
+      }
+    }
+  },
+  {
+    "group": "crypto",
+    "symbol": "ETH",
+    "entry_session": "weekdays",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 0.0001,
+    "elapsed_s": 94.1,
+    "trades": 127,
+    "win_rate_pct": 33.86,
+    "profit_factor": 1.11,
+    "net_r": 11.04,
+    "return_pct": 9.44,
+    "max_dd_pct": 16.63,
+    "avg_test_auc": 0.5912,
+    "avg_test_bal_acc_pct": 51.84,
+    "avg_expected_ev_r": 0.221,
+    "avg_realized_r": 0.087,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 13727,
+    "rejected_stand_down": 0,
+    "rejected_comm": 4379,
+    "rejected_ev": 29153,
+    "by_side": {
+      "LONG": {
+        "trades": 16,
+        "tp_rate_pct": 31.25,
+        "win_rate_pct": 31.25,
+        "net_r": 1.7339295308412441
+      },
+      "SHORT": {
+        "trades": 111,
+        "tp_rate_pct": 29.72972972972973,
+        "win_rate_pct": 34.234234234234236,
+        "net_r": 9.307933231022831
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 56,
+        "longs": 8,
+        "shorts": 48,
+        "win_rate_pct": 37.5,
+        "net_r": 9.50877006201642
+      },
+      "BEAR_30D": {
+        "trades": 71,
+        "longs": 8,
+        "shorts": 63,
+        "win_rate_pct": 30.985915492957748,
+        "net_r": 1.5330926998476548
+      }
+    }
+  },
+  {
+    "group": "crypto",
+    "symbol": "BTC",
+    "entry_session": "weekdays",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 0.0001,
+    "elapsed_s": 357.6,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6073,
+    "avg_test_bal_acc_pct": 50.68,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 13727,
+    "rejected_stand_down": 34196,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "crypto",
+    "symbol": "ETH",
+    "entry_session": "weekdays",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 0.0001,
+    "elapsed_s": 390.0,
+    "trades": 195,
+    "win_rate_pct": 33.33,
+    "profit_factor": 0.95,
+    "net_r": -4.52,
+    "return_pct": -6.21,
+    "max_dd_pct": 18.32,
+    "avg_test_auc": 0.6144,
+    "avg_test_bal_acc_pct": 50.96,
+    "avg_expected_ev_r": 0.146,
+    "avg_realized_r": -0.023,
+    "gross_r_range": [
+      -1.0,
+      3.0
+    ],
+    "rejected_session": 13727,
+    "rejected_stand_down": 9600,
+    "rejected_comm": 219,
+    "rejected_ev": 23128,
+    "by_side": {
+      "LONG": {
+        "trades": 76,
+        "tp_rate_pct": 31.57894736842105,
+        "win_rate_pct": 39.473684210526315,
+        "net_r": 3.7070414383268826
+      },
+      "SHORT": {
+        "trades": 119,
+        "tp_rate_pct": 27.73109243697479,
+        "win_rate_pct": 29.41176470588235,
+        "net_r": -8.225750682571679
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 58,
+        "longs": 36,
+        "shorts": 22,
+        "win_rate_pct": 37.93103448275862,
+        "net_r": 6.448285212028594
+      },
+      "BEAR_30D": {
+        "trades": 137,
+        "longs": 40,
+        "shorts": 97,
+        "win_rate_pct": 31.386861313868614,
+        "net_r": -10.96699445627339
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 16.5,
+    "trades": 32,
+    "win_rate_pct": 9.38,
+    "profit_factor": 0.25,
+    "net_r": -22.13,
+    "return_pct": -6.8,
+    "max_dd_pct": 7.0,
+    "avg_test_auc": 0.5165,
+    "avg_test_bal_acc_pct": 49.54,
+    "avg_expected_ev_r": 0.185,
+    "avg_realized_r": -0.692,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21128,
+    "rejected_stand_down": 0,
+    "rejected_comm": 3431,
+    "rejected_ev": 9161,
+    "by_side": {
+      "LONG": {
+        "trades": 32,
+        "tp_rate_pct": 9.375,
+        "win_rate_pct": 9.375,
+        "net_r": -22.13392141534147
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 32,
+        "longs": 32,
+        "shorts": 0,
+        "win_rate_pct": 9.375,
+        "net_r": -22.13392141534147
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 19.2,
+    "trades": 11,
+    "win_rate_pct": 27.27,
+    "profit_factor": 0.72,
+    "net_r": -2.85,
+    "return_pct": -0.74,
+    "max_dd_pct": 2.06,
+    "avg_test_auc": 0.5527,
+    "avg_test_bal_acc_pct": 49.65,
+    "avg_expected_ev_r": 0.122,
+    "avg_realized_r": -0.259,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21167,
+    "rejected_stand_down": 6194,
+    "rejected_comm": 562,
+    "rejected_ev": 5903,
+    "by_side": {
+      "LONG": {
+        "trades": 5,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -5.194691564165816
+      },
+      "SHORT": {
+        "trades": 6,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 50.0,
+        "net_r": 2.3482793509614055
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 0,
+        "shorts": 3,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": 0.40039090083441
+      },
+      "BEAR_30D": {
+        "trades": 8,
+        "longs": 5,
+        "shorts": 3,
+        "win_rate_pct": 25.0,
+        "net_r": -3.246803114038821
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "london_ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 29.8,
+    "trades": 6,
+    "win_rate_pct": 83.33,
+    "profit_factor": 9.44,
+    "net_r": 9.33,
+    "return_pct": 2.78,
+    "max_dd_pct": 0.85,
+    "avg_test_auc": 0.6096,
+    "avg_test_bal_acc_pct": 51.05,
+    "avg_expected_ev_r": 0.333,
+    "avg_realized_r": 1.555,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 14127,
+    "rejected_stand_down": 9654,
+    "rejected_comm": 1390,
+    "rejected_ev": 8664,
+    "by_side": {
+      "SHORT": {
+        "trades": 6,
+        "tp_rate_pct": 66.66666666666667,
+        "win_rate_pct": 83.33333333333333,
+        "net_r": 9.328802497344208
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 1,
+        "longs": 0,
+        "shorts": 1,
+        "win_rate_pct": 100.0,
+        "net_r": 2.468686662409404
+      },
+      "BEAR_30D": {
+        "trades": 5,
+        "longs": 0,
+        "shorts": 5,
+        "win_rate_pct": 80.0,
+        "net_r": 6.860115834934804
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 22.3,
+    "trades": 93,
+    "win_rate_pct": 35.48,
+    "profit_factor": 1.05,
+    "net_r": 9.23,
+    "return_pct": 0.9,
+    "max_dd_pct": 5.58,
+    "avg_test_auc": 0.6343,
+    "avg_test_bal_acc_pct": 52.78,
+    "avg_expected_ev_r": 0.168,
+    "avg_realized_r": 0.099,
+    "gross_r_range": [
+      -1.72,
+      3.03
+    ],
+    "rejected_session": 21171,
+    "rejected_stand_down": 0,
+    "rejected_comm": 2506,
+    "rejected_ev": 9912,
+    "by_side": {
+      "LONG": {
+        "trades": 10,
+        "tp_rate_pct": 20.0,
+        "win_rate_pct": 30.0,
+        "net_r": -1.6360308450537864
+      },
+      "SHORT": {
+        "trades": 83,
+        "tp_rate_pct": 26.50602409638554,
+        "win_rate_pct": 36.144578313253014,
+        "net_r": 10.87016672270528
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 50,
+        "longs": 8,
+        "shorts": 42,
+        "win_rate_pct": 32.0,
+        "net_r": 1.5070742635870429
+      },
+      "BEAR_30D": {
+        "trades": 43,
+        "longs": 2,
+        "shorts": 41,
+        "win_rate_pct": 39.53488372093023,
+        "net_r": 7.727061614064452
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "weekdays",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 43.7,
+    "trades": 9,
+    "win_rate_pct": 33.33,
+    "profit_factor": 1.12,
+    "net_r": 0.25,
+    "return_pct": 0.22,
+    "max_dd_pct": 1.95,
+    "avg_test_auc": 0.5783,
+    "avg_test_bal_acc_pct": 50.16,
+    "avg_expected_ev_r": 0.117,
+    "avg_realized_r": 0.027,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 780,
+    "rejected_stand_down": 16155,
+    "rejected_comm": 3829,
+    "rejected_ev": 13060,
+    "by_side": {
+      "LONG": {
+        "trades": 6,
+        "tp_rate_pct": 16.666666666666668,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": -0.12079599481476766
+      },
+      "SHORT": {
+        "trades": 3,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": 0.36596406079051946
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 2,
+        "shorts": 1,
+        "win_rate_pct": 66.66666666666667,
+        "net_r": 2.993454073994437
+      },
+      "BEAR_30D": {
+        "trades": 6,
+        "longs": 4,
+        "shorts": 2,
+        "win_rate_pct": 16.666666666666668,
+        "net_r": -2.7482860080186855
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 11.6,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5423,
+    "avg_test_bal_acc_pct": 51.94,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21128,
+    "rejected_stand_down": 12711,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 18.3,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5654,
+    "avg_test_bal_acc_pct": 51.96,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21166,
+    "rejected_stand_down": 6192,
+    "rejected_comm": 5123,
+    "rejected_ev": 1358,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "london_ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 31.4,
+    "trades": 12,
+    "win_rate_pct": 25.0,
+    "profit_factor": 0.71,
+    "net_r": -2.03,
+    "return_pct": -0.75,
+    "max_dd_pct": 2.15,
+    "avg_test_auc": 0.6628,
+    "avg_test_bal_acc_pct": 53.82,
+    "avg_expected_ev_r": 0.309,
+    "avg_realized_r": -0.169,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 14126,
+    "rejected_stand_down": 9650,
+    "rejected_comm": 7185,
+    "rejected_ev": 2851,
+    "by_side": {
+      "LONG": {
+        "trades": 3,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -3.1188259260505116
+      },
+      "SHORT": {
+        "trades": 9,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": 1.0858979072197839
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 8,
+        "longs": 3,
+        "shorts": 5,
+        "win_rate_pct": 25.0,
+        "net_r": -1.3516724376098033
+      },
+      "BEAR_30D": {
+        "trades": 4,
+        "longs": 0,
+        "shorts": 4,
+        "win_rate_pct": 25.0,
+        "net_r": -0.6812555812209244
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 16.9,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6754,
+    "avg_test_bal_acc_pct": 52.63,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21167,
+    "rejected_stand_down": 12672,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "weekdays",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 48.8,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6206,
+    "avg_test_bal_acc_pct": 53.32,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 780,
+    "rejected_stand_down": 33059,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 12.4,
+    "trades": 114,
+    "win_rate_pct": 26.32,
+    "profit_factor": 0.78,
+    "net_r": -23.38,
+    "return_pct": -5.56,
+    "max_dd_pct": 7.6,
+    "avg_test_auc": 0.4902,
+    "avg_test_bal_acc_pct": 50.46,
+    "avg_expected_ev_r": 0.147,
+    "avg_realized_r": -0.205,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21130,
+    "rejected_stand_down": 0,
+    "rejected_comm": 10622,
+    "rejected_ev": 1620,
+    "by_side": {
+      "LONG": {
+        "trades": 106,
+        "tp_rate_pct": 20.754716981132077,
+        "win_rate_pct": 27.358490566037737,
+        "net_r": -19.184228323794997
+      },
+      "SHORT": {
+        "trades": 8,
+        "tp_rate_pct": 12.5,
+        "win_rate_pct": 12.5,
+        "net_r": -4.1984620596415345
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 27,
+        "longs": 20,
+        "shorts": 7,
+        "win_rate_pct": 7.407407407407407,
+        "net_r": -20.521481370707786
+      },
+      "BEAR_30D": {
+        "trades": 87,
+        "longs": 86,
+        "shorts": 1,
+        "win_rate_pct": 32.18390804597701,
+        "net_r": -2.8612090127287466
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 19.9,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5727,
+    "avg_test_bal_acc_pct": 50.45,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21169,
+    "rejected_stand_down": 12676,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "london_ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 31.3,
+    "trades": 3,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "net_r": -3.14,
+    "return_pct": -0.81,
+    "max_dd_pct": 0.82,
+    "avg_test_auc": 0.6402,
+    "avg_test_bal_acc_pct": 52.2,
+    "avg_expected_ev_r": 0.131,
+    "avg_realized_r": -1.046,
+    "gross_r_range": [
+      -1.0,
+      -1.0
+    ],
+    "rejected_session": 14129,
+    "rejected_stand_down": 10060,
+    "rejected_comm": 5190,
+    "rejected_ev": 4461,
+    "by_side": {
+      "LONG": {
+        "trades": 3,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -3.138780615185375
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 1,
+        "longs": 1,
+        "shorts": 0,
+        "win_rate_pct": 0.0,
+        "net_r": -1.0498214798036978
+      },
+      "BEAR_30D": {
+        "trades": 2,
+        "longs": 2,
+        "shorts": 0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.0889591353816774
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 22.1,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6429,
+    "avg_test_bal_acc_pct": 51.88,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21173,
+    "rejected_stand_down": 6456,
+    "rejected_comm": 2896,
+    "rejected_ev": 3320,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "weekdays",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 47.3,
+    "trades": 58,
+    "win_rate_pct": 20.69,
+    "profit_factor": 0.59,
+    "net_r": -19.82,
+    "return_pct": -5.22,
+    "max_dd_pct": 7.74,
+    "avg_test_auc": 0.6039,
+    "avg_test_bal_acc_pct": 51.93,
+    "avg_expected_ev_r": 0.283,
+    "avg_realized_r": -0.342,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 780,
+    "rejected_stand_down": 0,
+    "rejected_comm": 20510,
+    "rejected_ev": 12387,
+    "by_side": {
+      "LONG": {
+        "trades": 50,
+        "tp_rate_pct": 16.0,
+        "win_rate_pct": 18.0,
+        "net_r": -21.950245506685075
+      },
+      "SHORT": {
+        "trades": 8,
+        "tp_rate_pct": 37.5,
+        "win_rate_pct": 37.5,
+        "net_r": 2.1263008564753703
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 27,
+        "longs": 22,
+        "shorts": 5,
+        "win_rate_pct": 14.814814814814815,
+        "net_r": -16.177057973806814
+      },
+      "BEAR_30D": {
+        "trades": 31,
+        "longs": 28,
+        "shorts": 3,
+        "win_rate_pct": 25.806451612903224,
+        "net_r": -3.6468866764028904
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 10.6,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5056,
+    "avg_test_bal_acc_pct": 50.14,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21126,
+    "rejected_stand_down": 6510,
+    "rejected_comm": 5136,
+    "rejected_ev": 1069,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 17.6,
+    "trades": 3,
+    "win_rate_pct": 66.67,
+    "profit_factor": 4.56,
+    "net_r": 3.85,
+    "return_pct": 0.94,
+    "max_dd_pct": 0.59,
+    "avg_test_auc": 0.57,
+    "avg_test_bal_acc_pct": 50.14,
+    "avg_expected_ev_r": 0.146,
+    "avg_realized_r": 1.285,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21166,
+    "rejected_stand_down": 6483,
+    "rejected_comm": 2139,
+    "rejected_ev": 4050,
+    "by_side": {
+      "LONG": {
+        "trades": 3,
+        "tp_rate_pct": 66.66666666666667,
+        "win_rate_pct": 66.66666666666667,
+        "net_r": 3.854448580558045
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 2,
+        "shorts": 0,
+        "win_rate_pct": 50.0,
+        "net_r": 1.4036987114052841
+      },
+      "BEAR_30D": {
+        "trades": 1,
+        "longs": 1,
+        "shorts": 0,
+        "win_rate_pct": 100.0,
+        "net_r": 2.4507498691527605
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "london_ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 33.1,
+    "trades": 11,
+    "win_rate_pct": 36.36,
+    "profit_factor": 1.33,
+    "net_r": 2.46,
+    "return_pct": 0.6,
+    "max_dd_pct": 1.34,
+    "avg_test_auc": 0.6513,
+    "avg_test_bal_acc_pct": 51.22,
+    "avg_expected_ev_r": 0.151,
+    "avg_realized_r": 0.224,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 14126,
+    "rejected_stand_down": 10063,
+    "rejected_comm": 3610,
+    "rejected_ev": 6022,
+    "by_side": {
+      "LONG": {
+        "trades": 11,
+        "tp_rate_pct": 36.36363636363637,
+        "win_rate_pct": 36.36363636363637,
+        "net_r": 2.462433729500085
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 7,
+        "longs": 7,
+        "shorts": 0,
+        "win_rate_pct": 28.571428571428573,
+        "net_r": -0.33980633581226893
+      },
+      "BEAR_30D": {
+        "trades": 4,
+        "longs": 4,
+        "shorts": 0,
+        "win_rate_pct": 50.0,
+        "net_r": 2.802240065312354
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 22.0,
+    "trades": 1,
+    "win_rate_pct": 100.0,
+    "profit_factor": null,
+    "net_r": 1.21,
+    "return_pct": 0.39,
+    "max_dd_pct": 0.25,
+    "avg_test_auc": 0.6656,
+    "avg_test_bal_acc_pct": 50.32,
+    "avg_expected_ev_r": 0.123,
+    "avg_realized_r": 1.206,
+    "gross_r_range": [
+      1.24,
+      1.24
+    ],
+    "rejected_session": 21169,
+    "rejected_stand_down": 6460,
+    "rejected_comm": 2018,
+    "rejected_ev": 4193,
+    "by_side": {
+      "LONG": {
+        "trades": 1,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 100.0,
+        "net_r": 1.2055695992511288
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 1,
+        "longs": 1,
+        "shorts": 0,
+        "win_rate_pct": 100.0,
+        "net_r": 1.2055695992511288
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "weekdays",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 50.6,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6221,
+    "avg_test_bal_acc_pct": 51.89,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 780,
+    "rejected_stand_down": 16908,
+    "rejected_comm": 9350,
+    "rejected_ev": 6803,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 21.4,
+    "trades": 6,
+    "win_rate_pct": 50.0,
+    "profit_factor": 1.93,
+    "net_r": 3.23,
+    "return_pct": 0.99,
+    "max_dd_pct": 0.89,
+    "avg_test_auc": 0.5106,
+    "avg_test_bal_acc_pct": 49.43,
+    "avg_expected_ev_r": 0.24,
+    "avg_realized_r": 0.538,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21127,
+    "rejected_stand_down": 6512,
+    "rejected_comm": 3886,
+    "rejected_ev": 2303,
+    "by_side": {
+      "SHORT": {
+        "trades": 6,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 50.0,
+        "net_r": 3.226969973076349
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 0,
+        "shorts": 2,
+        "win_rate_pct": 50.0,
+        "net_r": 1.4295964483124561
+      },
+      "BEAR_30D": {
+        "trades": 4,
+        "longs": 0,
+        "shorts": 4,
+        "win_rate_pct": 50.0,
+        "net_r": 1.7973735247638927
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 18.7,
+    "trades": 49,
+    "win_rate_pct": 32.65,
+    "profit_factor": 1.21,
+    "net_r": 2.56,
+    "return_pct": 2.35,
+    "max_dd_pct": 4.42,
+    "avg_test_auc": 0.5865,
+    "avg_test_bal_acc_pct": 51.36,
+    "avg_expected_ev_r": 0.182,
+    "avg_realized_r": 0.052,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21168,
+    "rejected_stand_down": 6197,
+    "rejected_comm": 1090,
+    "rejected_ev": 5205,
+    "by_side": {
+      "SHORT": {
+        "trades": 49,
+        "tp_rate_pct": 28.571428571428573,
+        "win_rate_pct": 32.6530612244898,
+        "net_r": 2.564164989980596
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 0,
+        "shorts": 3,
+        "win_rate_pct": 0.0,
+        "net_r": -3.1254334207778127
+      },
+      "BEAR_30D": {
+        "trades": 46,
+        "longs": 0,
+        "shorts": 46,
+        "win_rate_pct": 34.78260869565217,
+        "net_r": 5.689598410758409
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "london_ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 30.9,
+    "trades": 36,
+    "win_rate_pct": 36.11,
+    "profit_factor": 1.15,
+    "net_r": 4.17,
+    "return_pct": 1.19,
+    "max_dd_pct": 3.85,
+    "avg_test_auc": 0.5787,
+    "avg_test_bal_acc_pct": 51.77,
+    "avg_expected_ev_r": 0.285,
+    "avg_realized_r": 0.116,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 14128,
+    "rejected_stand_down": 0,
+    "rejected_comm": 7258,
+    "rejected_ev": 12329,
+    "by_side": {
+      "LONG": {
+        "trades": 8,
+        "tp_rate_pct": 37.5,
+        "win_rate_pct": 37.5,
+        "net_r": 2.163984347525532
+      },
+      "SHORT": {
+        "trades": 28,
+        "tp_rate_pct": 28.571428571428573,
+        "win_rate_pct": 35.714285714285715,
+        "net_r": 2.010291868543188
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 7,
+        "longs": 7,
+        "shorts": 0,
+        "win_rate_pct": 42.857142857142854,
+        "net_r": 3.2060913952275394
+      },
+      "BEAR_30D": {
+        "trades": 29,
+        "longs": 1,
+        "shorts": 28,
+        "win_rate_pct": 34.48275862068966,
+        "net_r": 0.9681848208411806
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 20.5,
+    "trades": 11,
+    "win_rate_pct": 45.45,
+    "profit_factor": 1.83,
+    "net_r": 6.05,
+    "return_pct": 1.62,
+    "max_dd_pct": 0.91,
+    "avg_test_auc": 0.5954,
+    "avg_test_bal_acc_pct": 51.21,
+    "avg_expected_ev_r": 0.225,
+    "avg_realized_r": 0.55,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21172,
+    "rejected_stand_down": 0,
+    "rejected_comm": 4835,
+    "rejected_ev": 7815,
+    "by_side": {
+      "LONG": {
+        "trades": 4,
+        "tp_rate_pct": 50.0,
+        "win_rate_pct": 50.0,
+        "net_r": 2.815576198073156
+      },
+      "SHORT": {
+        "trades": 7,
+        "tp_rate_pct": 42.857142857142854,
+        "win_rate_pct": 42.857142857142854,
+        "net_r": 3.235600617745898
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 4,
+        "longs": 4,
+        "shorts": 0,
+        "win_rate_pct": 50.0,
+        "net_r": 2.815576198073156
+      },
+      "BEAR_30D": {
+        "trades": 7,
+        "longs": 0,
+        "shorts": 7,
+        "win_rate_pct": 42.857142857142854,
+        "net_r": 3.235600617745898
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "weekdays",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 47.1,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5692,
+    "avg_test_bal_acc_pct": 51.04,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 778,
+    "rejected_stand_down": 16908,
+    "rejected_comm": 9502,
+    "rejected_ev": 6656,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 66.5,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.4935,
+    "avg_test_bal_acc_pct": 49.93,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21128,
+    "rejected_stand_down": 12715,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "london",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 86.6,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5952,
+    "avg_test_bal_acc_pct": 49.96,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21167,
+    "rejected_stand_down": 6194,
+    "rejected_comm": 5,
+    "rejected_ev": 6477,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "london_ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 126.8,
+    "trades": 17,
+    "win_rate_pct": 23.53,
+    "profit_factor": 0.48,
+    "net_r": -7.62,
+    "return_pct": -2.28,
+    "max_dd_pct": 3.1,
+    "avg_test_auc": 0.6118,
+    "avg_test_bal_acc_pct": 50.36,
+    "avg_expected_ev_r": 0.144,
+    "avg_realized_r": -0.448,
+    "gross_r_range": [
+      -1.0,
+      2.09
+    ],
+    "rejected_session": 14127,
+    "rejected_stand_down": 9654,
+    "rejected_comm": 149,
+    "rejected_ev": 9850,
+    "by_side": {
+      "LONG": {
+        "trades": 2,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.052904691978245
+      },
+      "SHORT": {
+        "trades": 15,
+        "tp_rate_pct": 6.666666666666667,
+        "win_rate_pct": 26.666666666666668,
+        "net_r": -5.564525728714731
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 5,
+        "longs": 0,
+        "shorts": 5,
+        "win_rate_pct": 20.0,
+        "net_r": -2.0965120800829316
+      },
+      "BEAR_30D": {
+        "trades": 12,
+        "longs": 2,
+        "shorts": 10,
+        "win_rate_pct": 25.0,
+        "net_r": -5.520918340610045
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "AUDUSD",
+    "entry_session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 86.8,
+    "trades": 5,
+    "win_rate_pct": 60.0,
+    "profit_factor": 2.84,
+    "net_r": 4.28,
+    "return_pct": 1.1,
+    "max_dd_pct": 1.08,
+    "avg_test_auc": 0.6116,
+    "avg_test_bal_acc_pct": 52.06,
+    "avg_expected_ev_r": 0.154,
+    "avg_realized_r": 0.856,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21171,
+    "rejected_stand_down": 6214,
+    "rejected_comm": 180,
+    "rejected_ev": 6270,
+    "by_side": {
+      "SHORT": {
+        "trades": 5,
+        "tp_rate_pct": 60.0,
+        "win_rate_pct": 60.0,
+        "net_r": 4.280245776652851
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 5,
+        "longs": 0,
+        "shorts": 5,
+        "win_rate_pct": 60.0,
+        "net_r": 4.280245776652851
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 70.4,
+    "trades": 7,
+    "win_rate_pct": 28.57,
+    "profit_factor": 0.73,
+    "net_r": -1.34,
+    "return_pct": -0.35,
+    "max_dd_pct": 1.7,
+    "avg_test_auc": 0.5266,
+    "avg_test_bal_acc_pct": 49.93,
+    "avg_expected_ev_r": 0.141,
+    "avg_realized_r": -0.191,
+    "gross_r_range": [
+      -1.0,
+      2.0
+    ],
+    "rejected_session": 21128,
+    "rejected_stand_down": 6205,
+    "rejected_comm": 5390,
+    "rejected_ev": 1089,
+    "by_side": {
+      "SHORT": {
+        "trades": 7,
+        "tp_rate_pct": 28.571428571428573,
+        "win_rate_pct": 28.571428571428573,
+        "net_r": -1.3350303652993594
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 5,
+        "longs": 0,
+        "shorts": 5,
+        "win_rate_pct": 20.0,
+        "net_r": -2.2397279333504647
+      },
+      "BEAR_30D": {
+        "trades": 2,
+        "longs": 0,
+        "shorts": 2,
+        "win_rate_pct": 50.0,
+        "net_r": 0.9046975680511053
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "london",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 78.6,
+    "trades": 2,
+    "win_rate_pct": 50.0,
+    "profit_factor": 2.1,
+    "net_r": 1.92,
+    "return_pct": 0.39,
+    "max_dd_pct": 0.68,
+    "avg_test_auc": 0.6148,
+    "avg_test_bal_acc_pct": 50.09,
+    "avg_expected_ev_r": 0.171,
+    "avg_realized_r": 0.958,
+    "gross_r_range": [
+      -1.0,
+      3.0
+    ],
+    "rejected_session": 21166,
+    "rejected_stand_down": 6192,
+    "rejected_comm": 1932,
+    "rejected_ev": 4544,
+    "by_side": {
+      "SHORT": {
+        "trades": 2,
+        "tp_rate_pct": 50.0,
+        "win_rate_pct": 50.0,
+        "net_r": 1.9167162701194214
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 0,
+        "shorts": 2,
+        "win_rate_pct": 50.0,
+        "net_r": 1.9167162701194214
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "london_ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 93.6,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6709,
+    "avg_test_bal_acc_pct": 50.28,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 14126,
+    "rejected_stand_down": 0,
+    "rejected_comm": 8759,
+    "rejected_ev": 10954,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "CADUSD",
+    "entry_session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 66.0,
+    "trades": 2,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "net_r": -2.08,
+    "return_pct": -0.65,
+    "max_dd_pct": 0.65,
+    "avg_test_auc": 0.56,
+    "avg_test_bal_acc_pct": 49.99,
+    "avg_expected_ev_r": 0.137,
+    "avg_realized_r": -1.039,
+    "gross_r_range": [
+      -1.0,
+      -1.0
+    ],
+    "rejected_session": 21167,
+    "rejected_stand_down": 6210,
+    "rejected_comm": 1992,
+    "rejected_ev": 4468,
+    "by_side": {
+      "LONG": {
+        "trades": 2,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.077132602762157
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 2,
+        "longs": 2,
+        "shorts": 0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.077132602762157
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 82.3,
+    "trades": 3,
+    "win_rate_pct": 33.33,
+    "profit_factor": 1.85,
+    "net_r": 0.87,
+    "return_pct": 0.47,
+    "max_dd_pct": 0.63,
+    "avg_test_auc": 0.5006,
+    "avg_test_bal_acc_pct": 49.98,
+    "avg_expected_ev_r": 0.23,
+    "avg_realized_r": 0.291,
+    "gross_r_range": [
+      -1.0,
+      3.0
+    ],
+    "rejected_session": 21130,
+    "rejected_stand_down": 6510,
+    "rejected_comm": 3280,
+    "rejected_ev": 2922,
+    "by_side": {
+      "SHORT": {
+        "trades": 3,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": 0.8744050442878952
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 0,
+        "shorts": 2,
+        "win_rate_pct": 50.0,
+        "net_r": 1.9213745640625814
+      },
+      "BEAR_30D": {
+        "trades": 1,
+        "longs": 0,
+        "shorts": 1,
+        "win_rate_pct": 0.0,
+        "net_r": -1.0469695197746862
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "london",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 96.5,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6081,
+    "avg_test_bal_acc_pct": 50.11,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21169,
+    "rejected_stand_down": 12676,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "london_ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 147.9,
+    "trades": 35,
+    "win_rate_pct": 25.71,
+    "profit_factor": 0.81,
+    "net_r": -4.6,
+    "return_pct": -1.75,
+    "max_dd_pct": 4.76,
+    "avg_test_auc": 0.6177,
+    "avg_test_bal_acc_pct": 50.43,
+    "avg_expected_ev_r": 0.391,
+    "avg_realized_r": -0.131,
+    "gross_r_range": [
+      -1.0,
+      4.0
+    ],
+    "rejected_session": 14129,
+    "rejected_stand_down": 9656,
+    "rejected_comm": 1862,
+    "rejected_ev": 8020,
+    "by_side": {
+      "LONG": {
+        "trades": 14,
+        "tp_rate_pct": 28.571428571428573,
+        "win_rate_pct": 35.714285714285715,
+        "net_r": 4.449693793455794
+      },
+      "SHORT": {
+        "trades": 21,
+        "tp_rate_pct": 9.523809523809524,
+        "win_rate_pct": 19.047619047619047,
+        "net_r": -9.045191762562784
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 15,
+        "longs": 5,
+        "shorts": 10,
+        "win_rate_pct": 20.0,
+        "net_r": -6.811186392899916
+      },
+      "BEAR_30D": {
+        "trades": 20,
+        "longs": 9,
+        "shorts": 11,
+        "win_rate_pct": 30.0,
+        "net_r": 2.215688423792927
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "EURUSD",
+    "entry_session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 89.8,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6032,
+    "avg_test_bal_acc_pct": 50.66,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21173,
+    "rejected_stand_down": 12672,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 86.3,
+    "trades": 7,
+    "win_rate_pct": 28.57,
+    "profit_factor": 1.02,
+    "net_r": 0.07,
+    "return_pct": 0.03,
+    "max_dd_pct": 0.99,
+    "avg_test_auc": 0.5011,
+    "avg_test_bal_acc_pct": 49.78,
+    "avg_expected_ev_r": 0.353,
+    "avg_realized_r": 0.01,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 21126,
+    "rejected_stand_down": 6205,
+    "rejected_comm": 1838,
+    "rejected_ev": 4654,
+    "by_side": {
+      "LONG": {
+        "trades": 7,
+        "tp_rate_pct": 28.571428571428573,
+        "win_rate_pct": 28.571428571428573,
+        "net_r": 0.07046693552092001
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 7,
+        "longs": 7,
+        "shorts": 0,
+        "win_rate_pct": 28.571428571428573,
+        "net_r": 0.07046693552092001
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "london",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 92.0,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.597,
+    "avg_test_bal_acc_pct": 50.03,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21166,
+    "rejected_stand_down": 12675,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "london_ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 135.0,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6267,
+    "avg_test_bal_acc_pct": 50.06,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 14126,
+    "rejected_stand_down": 19715,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "GBPUSD",
+    "entry_session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 85.4,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5815,
+    "avg_test_bal_acc_pct": 50.2,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21169,
+    "rejected_stand_down": 12672,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 83.5,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5468,
+    "avg_test_bal_acc_pct": 49.93,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 21127,
+    "rejected_stand_down": 12717,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "london",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 96.1,
+    "trades": 16,
+    "win_rate_pct": 56.25,
+    "profit_factor": 2.95,
+    "net_r": 16.4,
+    "return_pct": 6.09,
+    "max_dd_pct": 1.84,
+    "avg_test_auc": 0.6158,
+    "avg_test_bal_acc_pct": 50.79,
+    "avg_expected_ev_r": 0.153,
+    "avg_realized_r": 1.025,
+    "gross_r_range": [
+      -1.0,
+      3.5
+    ],
+    "rejected_session": 21168,
+    "rejected_stand_down": 6197,
+    "rejected_comm": 87,
+    "rejected_ev": 6307,
+    "by_side": {
+      "SHORT": {
+        "trades": 16,
+        "tp_rate_pct": 37.5,
+        "win_rate_pct": 56.25,
+        "net_r": 16.396322909723754
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 16,
+        "longs": 0,
+        "shorts": 16,
+        "win_rate_pct": 56.25,
+        "net_r": 16.396322909723754
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "london_ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 141.3,
+    "trades": 36,
+    "win_rate_pct": 44.44,
+    "profit_factor": 1.66,
+    "net_r": 15.23,
+    "return_pct": 5.3,
+    "max_dd_pct": 2.73,
+    "avg_test_auc": 0.6001,
+    "avg_test_bal_acc_pct": 50.81,
+    "avg_expected_ev_r": 0.162,
+    "avg_realized_r": 0.423,
+    "gross_r_range": [
+      -1.0,
+      4.0
+    ],
+    "rejected_session": 14128,
+    "rejected_stand_down": 0,
+    "rejected_comm": 4711,
+    "rejected_ev": 14868,
+    "by_side": {
+      "LONG": {
+        "trades": 3,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -3.1137617005971014
+      },
+      "SHORT": {
+        "trades": 33,
+        "tp_rate_pct": 27.272727272727273,
+        "win_rate_pct": 48.484848484848484,
+        "net_r": 18.34332817776598
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 4,
+        "longs": 3,
+        "shorts": 1,
+        "win_rate_pct": 0.0,
+        "net_r": -4.152929859976441
+      },
+      "BEAR_30D": {
+        "trades": 32,
+        "longs": 0,
+        "shorts": 32,
+        "win_rate_pct": 50.0,
+        "net_r": 19.38249633714532
+      }
+    }
+  },
+  {
+    "group": "fx",
+    "symbol": "JPYUSD",
+    "entry_session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 2e-05,
+    "elapsed_s": 92.2,
+    "trades": 3,
+    "win_rate_pct": 66.67,
+    "profit_factor": 5.01,
+    "net_r": 4.18,
+    "return_pct": 1.04,
+    "max_dd_pct": 0.74,
+    "avg_test_auc": 0.6082,
+    "avg_test_bal_acc_pct": 51.05,
+    "avg_expected_ev_r": 0.378,
+    "avg_realized_r": 1.393,
+    "gross_r_range": [
+      -1.0,
+      4.0
+    ],
+    "rejected_session": 21172,
+    "rejected_stand_down": 0,
+    "rejected_comm": 3470,
+    "rejected_ev": 9197,
+    "by_side": {
+      "LONG": {
+        "trades": 3,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 66.66666666666667,
+        "net_r": 4.179544922888172
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 3,
+        "shorts": 0,
+        "win_rate_pct": 66.66666666666667,
+        "net_r": 4.179544922888172
+      }
+    }
+  },
+  {
+    "group": "indices",
+    "symbol": "NDX",
+    "entry_session": "ny_rth",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "commission": 5e-05,
+    "elapsed_s": 13.1,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.608,
+    "avg_test_bal_acc_pct": 50.51,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 22013,
+    "rejected_stand_down": 8958,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "indices",
+    "symbol": "NDX",
+    "entry_session": "ny_rth",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 5e-05,
+    "elapsed_s": 16.0,
+    "trades": 60,
+    "win_rate_pct": 23.33,
+    "profit_factor": 0.63,
+    "net_r": -17.29,
+    "return_pct": -12.86,
+    "max_dd_pct": 14.69,
+    "avg_test_auc": 0.5914,
+    "avg_test_bal_acc_pct": 51.71,
+    "avg_expected_ev_r": 0.355,
+    "avg_realized_r": -0.288,
+    "gross_r_range": [
+      -1.0,
+      2.5
+    ],
+    "rejected_session": 22013,
+    "rejected_stand_down": 0,
+    "rejected_comm": 1608,
+    "rejected_ev": 7249,
+    "by_side": {
+      "LONG": {
+        "trades": 7,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 14.285714285714286,
+        "net_r": -5.558090913838694
+      },
+      "SHORT": {
+        "trades": 53,
+        "tp_rate_pct": 22.641509433962263,
+        "win_rate_pct": 24.528301886792452,
+        "net_r": -11.733437488700979
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 37,
+        "longs": 2,
+        "shorts": 35,
+        "win_rate_pct": 27.027027027027028,
+        "net_r": -5.293236856728828
+      },
+      "BEAR_30D": {
+        "trades": 23,
+        "longs": 5,
+        "shorts": 18,
+        "win_rate_pct": 17.391304347826086,
+        "net_r": -11.998291545810844
+      }
+    }
+  },
+  {
+    "group": "indices",
+    "symbol": "SPX",
+    "entry_session": "ny_rth",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "commission": 5e-05,
+    "elapsed_s": 14.0,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6091,
+    "avg_test_bal_acc_pct": 49.99,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 22014,
+    "rejected_stand_down": 8965,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "indices",
+    "symbol": "SPX",
+    "entry_session": "ny_rth",
+    "arch": "fixed_2h",
+    "max_bars": 32,
+    "commission": 5e-05,
+    "elapsed_s": 12.5,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.6028,
+    "avg_test_bal_acc_pct": 51.36,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 22014,
+    "rejected_stand_down": 8965,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "indices",
+    "symbol": "NDX",
+    "entry_session": "ny_rth",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "commission": 5e-05,
+    "elapsed_s": 50.8,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5015,
+    "avg_test_bal_acc_pct": 50.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 22013,
+    "rejected_stand_down": 8958,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "indices",
+    "symbol": "NDX",
+    "entry_session": "ny_rth",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 5e-05,
+    "elapsed_s": 59.4,
+    "trades": 17,
+    "win_rate_pct": 29.41,
+    "profit_factor": 0.97,
+    "net_r": -0.2,
+    "return_pct": -0.4,
+    "max_dd_pct": 6.33,
+    "avg_test_auc": 0.5344,
+    "avg_test_bal_acc_pct": 50.08,
+    "avg_expected_ev_r": 0.179,
+    "avg_realized_r": -0.012,
+    "gross_r_range": [
+      -1.0,
+      4.62
+    ],
+    "rejected_session": 22013,
+    "rejected_stand_down": 0,
+    "rejected_comm": 663,
+    "rejected_ev": 8250,
+    "by_side": {
+      "SHORT": {
+        "trades": 17,
+        "tp_rate_pct": 23.529411764705884,
+        "win_rate_pct": 29.41176470588235,
+        "net_r": -0.19744749253119853
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 16,
+        "longs": 0,
+        "shorts": 16,
+        "win_rate_pct": 31.25,
+        "net_r": 0.8220303111482999
+      },
+      "BEAR_30D": {
+        "trades": 1,
+        "longs": 0,
+        "shorts": 1,
+        "win_rate_pct": 0.0,
+        "net_r": -1.0194778036794985
+      }
+    }
+  },
+  {
+    "group": "indices",
+    "symbol": "SPX",
+    "entry_session": "ny_rth",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "commission": 5e-05,
+    "elapsed_s": 50.9,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.4898,
+    "avg_test_bal_acc_pct": 50.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 22014,
+    "rejected_stand_down": 8965,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "group": "indices",
+    "symbol": "SPX",
+    "entry_session": "ny_rth",
+    "arch": "learned_10h",
+    "max_bars": 32,
+    "commission": 5e-05,
+    "elapsed_s": 54.8,
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_test_auc": 0.5495,
+    "avg_test_bal_acc_pct": 50.32,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "gross_r_range": null,
+    "rejected_session": 22014,
+    "rejected_stand_down": 8965,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  }
+]

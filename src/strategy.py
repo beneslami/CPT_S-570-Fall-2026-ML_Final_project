@@ -53,6 +53,64 @@ def compute_trade_ev(entry, tp, sl, p, commission=0.0001):
     return gross_ev - fee_ev
 
 
+def compute_trade_ev_3outcome(
+    entry,
+    tp,
+    sl,
+    p_tp,
+    p_sl,
+    p_to,
+    timeout_mean_r=0.0,
+    timeout_var_r=0.25,
+    commission=0.0001,
+):
+    """Exact 3-outcome (TP / SL / TIMEOUT) fee-adjusted expected value and Std_R in R-multiples.
+
+    Matches the simulator's true payoff distribution where timeouts close at market price:
+        EV_R = p_TP * r_TP_net + p_SL * r_SL_net + p_to * r_to_net
+    and computes exact Std_R via the Law of Total Variance.
+    """
+    entry = float(entry)
+    tp = float(tp)
+    sl = float(sl)
+    p_tp = float(p_tp)
+    p_sl = float(p_sl)
+    p_to = float(p_to)
+    mu_to = float(timeout_mean_r)
+    var_to = max(float(timeout_var_r), 0.0)
+    c = float(commission)
+
+    risk = abs(entry - sl)
+    if risk <= 0.0:
+        raise ValueError("entry and stop loss cannot be equal")
+    if c < 0.0:
+        raise ValueError("commission cannot be negative")
+
+    # Normalize probabilities defensively in case of floating-point rounding
+    p_sum = p_tp + p_sl + p_to
+    if p_sum <= 0.0:
+        raise ValueError("outcome probabilities must sum to a positive value")
+    p_tp /= p_sum
+    p_sl /= p_sum
+    p_to /= p_sum
+
+    side = 1.0 if tp > entry else -1.0
+    rr = abs(tp - entry) / risk
+    r_tp = rr - c * (entry + tp) / risk
+    r_sl = -1.0 - c * (entry + sl) / risk
+    est_to_exit = max(0.0, entry + side * mu_to * risk)
+    r_to = mu_to - c * (entry + est_to_exit) / risk
+
+    ev_r = p_tp * r_tp + p_sl * r_sl + p_to * r_to
+    second_moment = (
+        p_tp * (r_tp * r_tp)
+        + p_sl * (r_sl * r_sl)
+        + p_to * (r_to * r_to + var_to)
+    )
+    std_r = max(second_moment - ev_r * ev_r, 1e-6) ** 0.5
+    return ev_r, std_r
+
+
 class Strategy:
     def __init__(self, alpha=2.0, sl_atr=1.0, cost_pct=None, commission=0.0001):
         if alpha <= 0:

@@ -139,6 +139,7 @@ def select_probability_calibrator(raw_fit, y_fit, raw_validation, y_validation, 
 
 DERIVATIVE_RAW_COLUMNS = (
     "count",
+    "avg_trade_size",
     "volume_delta",
     "taker_buy_ratio",
     "spot_taker_buy_ratio",
@@ -346,7 +347,7 @@ def _compute_auxiliary_timeframe_features(
 
             htf_df = pd.DataFrame(
                 {
-                    "_close_time": aux.index + aux_td,
+                    "_close_time": (aux.index + aux_td).astype("datetime64[us, UTC]"),
                     f"{prefix}_ret_1": np.log(c / (prev_c + eps)),
                     f"{prefix}_ret_3": np.log(c / (c.shift(3) + eps)),
                     f"{prefix}_body_atr": (c - o) / (atr + eps),
@@ -356,7 +357,7 @@ def _compute_auxiliary_timeframe_features(
                 }
             ).sort_values("_close_time")
 
-            left = pd.DataFrame({"_time": data.index, "_close_time": data.index + primary_td})
+            left = pd.DataFrame({"_time": data.index, "_close_time": (data.index + primary_td).astype("datetime64[us, UTC]")})
             merged = (
                 pd.merge_asof(left, htf_df, on="_close_time", direction="backward", allow_exact_matches=True)
                 .set_index("_time")
@@ -578,6 +579,18 @@ def compute_features(
     if "count" in data.columns:
         log_cnt = np.log1p(pd.to_numeric(data["count"], errors="coerce").clip(lower=0.0))
         deriv_cols["log_count_z24"] = ((log_cnt - log_cnt.rolling(24).mean()) / (log_cnt.rolling(24).std() + eps)).clip(-5.0, 5.0)
+    if "avg_trade_size" in data.columns:
+        log_sz = np.log1p(pd.to_numeric(data["avg_trade_size"], errors="coerce").clip(lower=0.0))
+        deriv_cols["avg_trade_size_z24"] = ((log_sz - log_sz.rolling(24).mean()) / (log_sz.rolling(24).std() + eps)).clip(-5.0, 5.0)
+    if "perp_spot_basis" in data.columns:
+        basis = pd.to_numeric(data["perp_spot_basis"], errors="coerce").ffill().fillna(0.0)
+        deriv_cols["perp_spot_basis_z24"] = ((basis - basis.rolling(24).mean()) / (basis.rolling(24).std() + eps)).clip(-5.0, 5.0)
+    if "perp_to_spot_vol_ratio" in data.columns:
+        p2s = np.log1p(pd.to_numeric(data["perp_to_spot_vol_ratio"], errors="coerce").clip(lower=0.0))
+        deriv_cols["perp_to_spot_vol_z24"] = ((p2s - p2s.rolling(24).mean()) / (p2s.rolling(24).std() + eps)).clip(-5.0, 5.0)
+    if "volume_delta" in data.columns:
+        vd = pd.to_numeric(data["volume_delta"], errors="coerce").fillna(0.0)
+        deriv_cols["perp_tbr_cvd_12"] = (vd.rolling(12).sum() / (volume.rolling(12).sum() + eps)).clip(-1.0, 1.0)
     for ls_col in ("sum_taker_long_short_vol_ratio", "sum_toptrader_long_short_ratio"):
         if ls_col in data.columns:
             s = np.log(pd.to_numeric(data[ls_col], errors="coerce").clip(lower=1e-4))

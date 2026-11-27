@@ -1,0 +1,1355 @@
+[
+  {
+    "symbol": "EURUSD",
+    "session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 30.9,
+    "train_bars": 50827,
+    "test_bars": 12707,
+    "avg_test_auc": 0.7267,
+    "avg_test_bal_acc_pct": 58.32,
+    "avg_test_always0_pct": 83.3,
+    "val_chunk_nets_r": [
+      26.17,
+      9.77,
+      4.07
+    ],
+    "trades": 92,
+    "win_rate_pct": 36.96,
+    "profit_factor": 0.92,
+    "net_r": -10.78,
+    "return_pct": -2.68,
+    "max_dd_pct": 11.36,
+    "avg_expected_ev_r": 0.459,
+    "avg_realized_r": -0.117,
+    "rejected_stand_down": 0,
+    "rejected_comm": 7890,
+    "rejected_ev": 4585,
+    "by_side": {
+      "LONG": {
+        "trades": 86,
+        "tp_rate_pct": 26.74418604651163,
+        "win_rate_pct": 37.2093023255814,
+        "net_r": -12.701529803726912
+      },
+      "SHORT": {
+        "trades": 6,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": 1.9232992866940393
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 16,
+        "longs": 14,
+        "shorts": 2,
+        "win_rate_pct": 12.5,
+        "net_r": -25.619656180882984
+      },
+      "BEAR_30D": {
+        "trades": 76,
+        "longs": 72,
+        "shorts": 4,
+        "win_rate_pct": 42.10526315789474,
+        "net_r": 14.841425663850114
+      }
+    }
+  },
+  {
+    "symbol": "EURUSD",
+    "session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 32.4,
+    "train_bars": 50729,
+    "test_bars": 12683,
+    "avg_test_auc": 0.6763,
+    "avg_test_bal_acc_pct": 50.05,
+    "avg_test_always0_pct": 84.22,
+    "val_chunk_nets_r": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12682,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "EURUSD",
+    "session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 33.6,
+    "train_bars": 50716,
+    "test_bars": 12680,
+    "avg_test_auc": 0.7106,
+    "avg_test_bal_acc_pct": 61.28,
+    "avg_test_always0_pct": 82.03,
+    "val_chunk_nets_r": [
+      -0.26,
+      14.23,
+      7.14
+    ],
+    "trades": 2,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "net_r": -1.44,
+    "return_pct": -0.41,
+    "max_dd_pct": 0.63,
+    "avg_expected_ev_r": 0.284,
+    "avg_realized_r": -0.722,
+    "rejected_stand_down": 6336,
+    "rejected_comm": 2826,
+    "rejected_ev": 3515,
+    "by_side": {
+      "SHORT": {
+        "trades": 2,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -1.4435317044007057
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 1,
+        "longs": 0,
+        "shorts": 1,
+        "win_rate_pct": 0.0,
+        "net_r": -0.40329342724714473
+      },
+      "BEAR_30D": {
+        "trades": 1,
+        "longs": 0,
+        "shorts": 1,
+        "win_rate_pct": 0.0,
+        "net_r": -1.040238277153561
+      }
+    }
+  },
+  {
+    "symbol": "GBPUSD",
+    "session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 29.1,
+    "train_bars": 50821,
+    "test_bars": 12706,
+    "avg_test_auc": 0.7178,
+    "avg_test_bal_acc_pct": 53.68,
+    "avg_test_always0_pct": 83.52,
+    "val_chunk_nets_r": [
+      2.94,
+      3.42,
+      0.0
+    ],
+    "trades": 81,
+    "win_rate_pct": 43.21,
+    "profit_factor": 1.62,
+    "net_r": 39.29,
+    "return_pct": 12.48,
+    "max_dd_pct": 3.52,
+    "avg_expected_ev_r": 0.251,
+    "avg_realized_r": 0.485,
+    "rejected_stand_down": 33,
+    "rejected_comm": 7070,
+    "rejected_ev": 5414,
+    "by_side": {
+      "LONG": {
+        "trades": 74,
+        "tp_rate_pct": 28.37837837837838,
+        "win_rate_pct": 43.24324324324324,
+        "net_r": 37.327470840722924
+      },
+      "SHORT": {
+        "trades": 7,
+        "tp_rate_pct": 28.571428571428573,
+        "win_rate_pct": 42.857142857142854,
+        "net_r": 1.9640189253614468
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 6,
+        "longs": 4,
+        "shorts": 2,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": 9.015113473482833
+      },
+      "BEAR_30D": {
+        "trades": 75,
+        "longs": 70,
+        "shorts": 5,
+        "win_rate_pct": 44.0,
+        "net_r": 30.276376292601537
+      }
+    }
+  },
+  {
+    "symbol": "GBPUSD",
+    "session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 32.4,
+    "train_bars": 50721,
+    "test_bars": 12681,
+    "avg_test_auc": 0.6681,
+    "avg_test_bal_acc_pct": 50.71,
+    "avg_test_always0_pct": 84.21,
+    "val_chunk_nets_r": [
+      0.0,
+      10.74,
+      1.76
+    ],
+    "trades": 1,
+    "win_rate_pct": 100.0,
+    "profit_factor": null,
+    "net_r": 2.46,
+    "return_pct": 0.67,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": 0.104,
+    "avg_realized_r": 2.456,
+    "rejected_stand_down": 6336,
+    "rejected_comm": 1186,
+    "rejected_ev": 5157,
+    "by_side": {
+      "LONG": {
+        "trades": 1,
+        "tp_rate_pct": 100.0,
+        "win_rate_pct": 100.0,
+        "net_r": 2.455843285671733
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 1,
+        "longs": 1,
+        "shorts": 0,
+        "win_rate_pct": 100.0,
+        "net_r": 2.455843285671733
+      }
+    }
+  },
+  {
+    "symbol": "GBPUSD",
+    "session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 29.5,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.7124,
+    "avg_test_bal_acc_pct": 57.32,
+    "avg_test_always0_pct": 81.75,
+    "val_chunk_nets_r": [
+      7.61,
+      6.52,
+      28.56
+    ],
+    "trades": 6,
+    "win_rate_pct": 16.67,
+    "profit_factor": 0.37,
+    "net_r": -3.82,
+    "return_pct": -1.05,
+    "max_dd_pct": 1.71,
+    "avg_expected_ev_r": 0.342,
+    "avg_realized_r": -0.637,
+    "rejected_stand_down": 6336,
+    "rejected_comm": 1579,
+    "rejected_ev": 4752,
+    "by_side": {
+      "SHORT": {
+        "trades": 6,
+        "tp_rate_pct": 16.666666666666668,
+        "win_rate_pct": 16.666666666666668,
+        "net_r": -3.823154462709953
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 0,
+        "shorts": 3,
+        "win_rate_pct": 0.0,
+        "net_r": -4.18069427385096
+      },
+      "BEAR_30D": {
+        "trades": 3,
+        "longs": 0,
+        "shorts": 3,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": 0.3575398111410064
+      }
+    }
+  },
+  {
+    "symbol": "JPYUSD",
+    "session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 29.5,
+    "train_bars": 50830,
+    "test_bars": 12708,
+    "avg_test_auc": 0.6978,
+    "avg_test_bal_acc_pct": 55.3,
+    "avg_test_always0_pct": 83.25,
+    "val_chunk_nets_r": [
+      32.02,
+      16.25,
+      14.49
+    ],
+    "trades": 98,
+    "win_rate_pct": 41.84,
+    "profit_factor": 1.52,
+    "net_r": 43.69,
+    "return_pct": 14.28,
+    "max_dd_pct": 7.39,
+    "avg_expected_ev_r": 0.167,
+    "avg_realized_r": 0.446,
+    "rejected_stand_down": 0,
+    "rejected_comm": 4225,
+    "rejected_ev": 8230,
+    "by_side": {
+      "LONG": {
+        "trades": 11,
+        "tp_rate_pct": 27.272727272727273,
+        "win_rate_pct": 27.272727272727273,
+        "net_r": -0.008629422250666874
+      },
+      "SHORT": {
+        "trades": 87,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 43.67816091954023,
+        "net_r": 43.70124456670219
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 14,
+        "longs": 0,
+        "shorts": 14,
+        "win_rate_pct": 42.857142857142854,
+        "net_r": 9.980287065674299
+      },
+      "BEAR_30D": {
+        "trades": 84,
+        "longs": 11,
+        "shorts": 73,
+        "win_rate_pct": 41.666666666666664,
+        "net_r": 33.71232807877722
+      }
+    }
+  },
+  {
+    "symbol": "JPYUSD",
+    "session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 34.4,
+    "train_bars": 50727,
+    "test_bars": 12682,
+    "avg_test_auc": 0.6535,
+    "avg_test_bal_acc_pct": 50.25,
+    "avg_test_always0_pct": 84.08,
+    "val_chunk_nets_r": [
+      3.88,
+      2.68,
+      0.0
+    ],
+    "trades": 8,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "net_r": -8.31,
+    "return_pct": -2.53,
+    "max_dd_pct": 2.67,
+    "avg_expected_ev_r": 0.147,
+    "avg_realized_r": -1.039,
+    "rejected_stand_down": 9,
+    "rejected_comm": 3356,
+    "rejected_ev": 9304,
+    "by_side": {
+      "SHORT": {
+        "trades": 8,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -8.314871788244245
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 0,
+        "shorts": 2,
+        "win_rate_pct": 0.0,
+        "net_r": -2.0806659112977623
+      },
+      "BEAR_30D": {
+        "trades": 6,
+        "longs": 0,
+        "shorts": 6,
+        "win_rate_pct": 0.0,
+        "net_r": -6.234205876946482
+      }
+    }
+  },
+  {
+    "symbol": "JPYUSD",
+    "session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 33.2,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.7143,
+    "avg_test_bal_acc_pct": 59.36,
+    "avg_test_always0_pct": 82.13,
+    "val_chunk_nets_r": [
+      42.04,
+      40.52,
+      18.74
+    ],
+    "trades": 112,
+    "win_rate_pct": 43.75,
+    "profit_factor": 1.08,
+    "net_r": 15.04,
+    "return_pct": 3.71,
+    "max_dd_pct": 8.22,
+    "avg_expected_ev_r": 0.253,
+    "avg_realized_r": 0.134,
+    "rejected_stand_down": 0,
+    "rejected_comm": 4562,
+    "rejected_ev": 7649,
+    "by_side": {
+      "LONG": {
+        "trades": 5,
+        "tp_rate_pct": 60.0,
+        "win_rate_pct": 60.0,
+        "net_r": 4.727942208330389
+      },
+      "SHORT": {
+        "trades": 107,
+        "tp_rate_pct": 32.71028037383178,
+        "win_rate_pct": 42.99065420560748,
+        "net_r": 10.313868878106744
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 19,
+        "longs": 0,
+        "shorts": 19,
+        "win_rate_pct": 42.10526315789474,
+        "net_r": -7.65447979435075
+      },
+      "BEAR_30D": {
+        "trades": 93,
+        "longs": 5,
+        "shorts": 88,
+        "win_rate_pct": 44.086021505376344,
+        "net_r": 22.696290880787885
+      }
+    }
+  },
+  {
+    "symbol": "AUDUSD",
+    "session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 33.6,
+    "train_bars": 50823,
+    "test_bars": 12706,
+    "avg_test_auc": 0.6965,
+    "avg_test_bal_acc_pct": 55.98,
+    "avg_test_always0_pct": 83.25,
+    "val_chunk_nets_r": [
+      23.08,
+      5.07,
+      29.9
+    ],
+    "trades": 11,
+    "win_rate_pct": 36.36,
+    "profit_factor": 0.97,
+    "net_r": 0.72,
+    "return_pct": -0.14,
+    "max_dd_pct": 2.33,
+    "avg_expected_ev_r": 0.31,
+    "avg_realized_r": 0.066,
+    "rejected_stand_down": 0,
+    "rejected_comm": 1809,
+    "rejected_ev": 10873,
+    "by_side": {
+      "LONG": {
+        "trades": 2,
+        "tp_rate_pct": 50.0,
+        "win_rate_pct": 50.0,
+        "net_r": 1.485574964961984
+      },
+      "SHORT": {
+        "trades": 9,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": -0.7635307246805438
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 0,
+        "shorts": 2,
+        "win_rate_pct": 100.0,
+        "net_r": 4.909960921160487
+      },
+      "BEAR_30D": {
+        "trades": 9,
+        "longs": 2,
+        "shorts": 7,
+        "win_rate_pct": 22.22222222222222,
+        "net_r": -4.187916680879047
+      }
+    }
+  },
+  {
+    "symbol": "AUDUSD",
+    "session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 32.0,
+    "train_bars": 50726,
+    "test_bars": 12682,
+    "avg_test_auc": 0.6886,
+    "avg_test_bal_acc_pct": 51.18,
+    "avg_test_always0_pct": 84.01,
+    "val_chunk_nets_r": [
+      1.44,
+      6.85,
+      1.13
+    ],
+    "trades": 1,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "net_r": -1.05,
+    "return_pct": -0.27,
+    "max_dd_pct": 0.27,
+    "avg_expected_ev_r": 0.198,
+    "avg_realized_r": -1.046,
+    "rejected_stand_down": 0,
+    "rejected_comm": 1105,
+    "rejected_ev": 11573,
+    "by_side": {
+      "LONG": {
+        "trades": 1,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -1.0459082504604122
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 1,
+        "longs": 1,
+        "shorts": 0,
+        "win_rate_pct": 0.0,
+        "net_r": -1.0459082504604122
+      }
+    }
+  },
+  {
+    "symbol": "AUDUSD",
+    "session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 31.9,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.7213,
+    "avg_test_bal_acc_pct": 62.64,
+    "avg_test_always0_pct": 81.44,
+    "val_chunk_nets_r": [
+      14.41,
+      3.62,
+      2.81
+    ],
+    "trades": 109,
+    "win_rate_pct": 42.2,
+    "profit_factor": 1.05,
+    "net_r": 7.66,
+    "return_pct": 1.97,
+    "max_dd_pct": 6.97,
+    "avg_expected_ev_r": 0.268,
+    "avg_realized_r": 0.07,
+    "rejected_stand_down": 0,
+    "rejected_comm": 2512,
+    "rejected_ev": 9796,
+    "by_side": {
+      "LONG": {
+        "trades": 64,
+        "tp_rate_pct": 32.8125,
+        "win_rate_pct": 40.625,
+        "net_r": 15.453065417041875
+      },
+      "SHORT": {
+        "trades": 45,
+        "tp_rate_pct": 33.333333333333336,
+        "win_rate_pct": 44.44444444444444,
+        "net_r": -7.794709774480077
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 40,
+        "longs": 24,
+        "shorts": 16,
+        "win_rate_pct": 45.0,
+        "net_r": -5.979191886575611
+      },
+      "BEAR_30D": {
+        "trades": 69,
+        "longs": 40,
+        "shorts": 29,
+        "win_rate_pct": 40.57971014492754,
+        "net_r": 13.637547529137409
+      }
+    }
+  },
+  {
+    "symbol": "CADUSD",
+    "session": "asia",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 31.2,
+    "train_bars": 50819,
+    "test_bars": 12705,
+    "avg_test_auc": 0.7237,
+    "avg_test_bal_acc_pct": 57.03,
+    "avg_test_always0_pct": 85.51,
+    "val_chunk_nets_r": [
+      -12.23,
+      2.33,
+      -3.32
+    ],
+    "trades": 6,
+    "win_rate_pct": 33.33,
+    "profit_factor": 0.34,
+    "net_r": -2.86,
+    "return_pct": -0.75,
+    "max_dd_pct": 1.12,
+    "avg_expected_ev_r": 0.388,
+    "avg_realized_r": -0.477,
+    "rejected_stand_down": 6368,
+    "rejected_comm": 5653,
+    "rejected_ev": 670,
+    "by_side": {
+      "LONG": {
+        "trades": 6,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": -2.8635264578622626
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 4,
+        "longs": 4,
+        "shorts": 0,
+        "win_rate_pct": 25.0,
+        "net_r": -2.936914048826722
+      },
+      "BEAR_30D": {
+        "trades": 2,
+        "longs": 2,
+        "shorts": 0,
+        "win_rate_pct": 50.0,
+        "net_r": 0.07338759096445924
+      }
+    }
+  },
+  {
+    "symbol": "CADUSD",
+    "session": "london",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 33.3,
+    "train_bars": 50723,
+    "test_bars": 12681,
+    "avg_test_auc": 0.6978,
+    "avg_test_bal_acc_pct": 53.15,
+    "avg_test_always0_pct": 83.35,
+    "val_chunk_nets_r": [
+      9.76,
+      0.0,
+      0.37
+    ],
+    "trades": 26,
+    "win_rate_pct": 38.46,
+    "profit_factor": 1.29,
+    "net_r": 4.83,
+    "return_pct": 1.36,
+    "max_dd_pct": 1.85,
+    "avg_expected_ev_r": 0.21,
+    "avg_realized_r": 0.186,
+    "rejected_stand_down": 6336,
+    "rejected_comm": 3634,
+    "rejected_ev": 2656,
+    "by_side": {
+      "LONG": {
+        "trades": 22,
+        "tp_rate_pct": 18.181818181818183,
+        "win_rate_pct": 31.818181818181817,
+        "net_r": -2.480595655329345
+      },
+      "SHORT": {
+        "trades": 4,
+        "tp_rate_pct": 75.0,
+        "win_rate_pct": 75.0,
+        "net_r": 7.312407453685971
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 2,
+        "shorts": 0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.082842741173846
+      },
+      "BEAR_30D": {
+        "trades": 24,
+        "longs": 20,
+        "shorts": 4,
+        "win_rate_pct": 41.666666666666664,
+        "net_r": 6.9146545395304715
+      }
+    }
+  },
+  {
+    "symbol": "CADUSD",
+    "session": "ny",
+    "arch": "fixed_2h",
+    "max_bars": 16,
+    "elapsed_s": 32.3,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.6852,
+    "avg_test_bal_acc_pct": 53.42,
+    "avg_test_always0_pct": 83.31,
+    "val_chunk_nets_r": [
+      3.18,
+      3.99,
+      0.0
+    ],
+    "trades": 2,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "net_r": -2.1,
+    "return_pct": -0.52,
+    "max_dd_pct": 0.52,
+    "avg_expected_ev_r": 0.167,
+    "avg_realized_r": -1.049,
+    "rejected_stand_down": 6341,
+    "rejected_comm": 3612,
+    "rejected_ev": 2721,
+    "by_side": {
+      "LONG": {
+        "trades": 2,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.097298932607714
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 2,
+        "longs": 2,
+        "shorts": 0,
+        "win_rate_pct": 0.0,
+        "net_r": -2.097298932607714
+      }
+    }
+  },
+  {
+    "symbol": "EURUSD",
+    "session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 158.6,
+    "train_bars": 50827,
+    "test_bars": 12707,
+    "avg_test_auc": 0.6942,
+    "avg_test_bal_acc_pct": 50.85,
+    "avg_test_always0_pct": 89.55,
+    "val_chunk_nets_r": [
+      15.01,
+      0.0,
+      0.0
+    ],
+    "trades": 56,
+    "win_rate_pct": 32.14,
+    "profit_factor": 0.76,
+    "net_r": -10.26,
+    "return_pct": -3.82,
+    "max_dd_pct": 7.18,
+    "avg_expected_ev_r": 0.158,
+    "avg_realized_r": -0.183,
+    "rejected_stand_down": 6370,
+    "rejected_comm": 1772,
+    "rejected_ev": 4358,
+    "by_side": {
+      "LONG": {
+        "trades": 56,
+        "tp_rate_pct": 16.071428571428573,
+        "win_rate_pct": 32.142857142857146,
+        "net_r": -10.261597804137137
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 3,
+        "shorts": 0,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": -1.9129263758586497
+      },
+      "BEAR_30D": {
+        "trades": 53,
+        "longs": 53,
+        "shorts": 0,
+        "win_rate_pct": 32.075471698113205,
+        "net_r": -8.348671428278488
+      }
+    }
+  },
+  {
+    "symbol": "EURUSD",
+    "session": "london",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 150.1,
+    "train_bars": 50729,
+    "test_bars": 12683,
+    "avg_test_auc": 0.6255,
+    "avg_test_bal_acc_pct": 50.0,
+    "avg_test_always0_pct": 92.21,
+    "val_chunk_nets_r": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12682,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "EURUSD",
+    "session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 155.1,
+    "train_bars": 50716,
+    "test_bars": 12680,
+    "avg_test_auc": 0.7353,
+    "avg_test_bal_acc_pct": 51.13,
+    "avg_test_always0_pct": 89.21,
+    "val_chunk_nets_r": [
+      -18.06,
+      0.0,
+      1.99
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12679,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "GBPUSD",
+    "session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 156.7,
+    "train_bars": 50821,
+    "test_bars": 12706,
+    "avg_test_auc": 0.6944,
+    "avg_test_bal_acc_pct": 50.34,
+    "avg_test_always0_pct": 90.05,
+    "val_chunk_nets_r": [
+      0.27,
+      0.0,
+      4.0
+    ],
+    "trades": 33,
+    "win_rate_pct": 18.18,
+    "profit_factor": 0.3,
+    "net_r": -26.93,
+    "return_pct": -9.25,
+    "max_dd_pct": 10.01,
+    "avg_expected_ev_r": 0.165,
+    "avg_realized_r": -0.816,
+    "rejected_stand_down": 6336,
+    "rejected_comm": 1553,
+    "rejected_ev": 4683,
+    "by_side": {
+      "LONG": {
+        "trades": 33,
+        "tp_rate_pct": 9.090909090909092,
+        "win_rate_pct": 18.181818181818183,
+        "net_r": -26.93202288643492
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 33,
+        "longs": 33,
+        "shorts": 0,
+        "win_rate_pct": 18.181818181818183,
+        "net_r": -26.93202288643492
+      }
+    }
+  },
+  {
+    "symbol": "GBPUSD",
+    "session": "london",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 151.0,
+    "train_bars": 50721,
+    "test_bars": 12681,
+    "avg_test_auc": 0.6498,
+    "avg_test_bal_acc_pct": 50.0,
+    "avg_test_always0_pct": 92.42,
+    "val_chunk_nets_r": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12680,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "GBPUSD",
+    "session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 150.5,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.7291,
+    "avg_test_bal_acc_pct": 50.15,
+    "avg_test_always0_pct": 89.26,
+    "val_chunk_nets_r": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12677,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "JPYUSD",
+    "session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 147.4,
+    "train_bars": 50830,
+    "test_bars": 12708,
+    "avg_test_auc": 0.6885,
+    "avg_test_bal_acc_pct": 50.81,
+    "avg_test_always0_pct": 90.07,
+    "val_chunk_nets_r": [
+      -5.25,
+      4.44,
+      0.06
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12672,
+    "rejected_comm": 0,
+    "rejected_ev": 35,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "JPYUSD",
+    "session": "london",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 161.7,
+    "train_bars": 50727,
+    "test_bars": 12682,
+    "avg_test_auc": 0.6358,
+    "avg_test_bal_acc_pct": 50.02,
+    "avg_test_always0_pct": 90.73,
+    "val_chunk_nets_r": [
+      0.0,
+      3.02,
+      0.0
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 6345,
+    "rejected_comm": 1348,
+    "rejected_ev": 4988,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "JPYUSD",
+    "session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 157.3,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.7406,
+    "avg_test_bal_acc_pct": 53.57,
+    "avg_test_always0_pct": 88.57,
+    "val_chunk_nets_r": [
+      14.03,
+      49.88,
+      0.67
+    ],
+    "trades": 41,
+    "win_rate_pct": 58.54,
+    "profit_factor": 2.39,
+    "net_r": 46.35,
+    "return_pct": 17.89,
+    "max_dd_pct": 3.55,
+    "avg_expected_ev_r": 0.348,
+    "avg_realized_r": 1.13,
+    "rejected_stand_down": 5,
+    "rejected_comm": 1961,
+    "rejected_ev": 10566,
+    "by_side": {
+      "SHORT": {
+        "trades": 41,
+        "tp_rate_pct": 34.146341463414636,
+        "win_rate_pct": 58.53658536585366,
+        "net_r": 46.34706157530272
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 3,
+        "longs": 0,
+        "shorts": 3,
+        "win_rate_pct": 33.333333333333336,
+        "net_r": -7.650154101481878
+      },
+      "BEAR_30D": {
+        "trades": 38,
+        "longs": 0,
+        "shorts": 38,
+        "win_rate_pct": 60.526315789473685,
+        "net_r": 53.99721567678459
+      }
+    }
+  },
+  {
+    "symbol": "AUDUSD",
+    "session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 158.2,
+    "train_bars": 50823,
+    "test_bars": 12706,
+    "avg_test_auc": 0.712,
+    "avg_test_bal_acc_pct": 50.0,
+    "avg_test_always0_pct": 90.56,
+    "val_chunk_nets_r": [
+      11.45,
+      0.0,
+      2.78
+    ],
+    "trades": 1,
+    "win_rate_pct": 0.0,
+    "profit_factor": 0.0,
+    "net_r": -3.94,
+    "return_pct": -1.64,
+    "max_dd_pct": 2.36,
+    "avg_expected_ev_r": 0.161,
+    "avg_realized_r": -3.94,
+    "rejected_stand_down": 6336,
+    "rejected_comm": 4,
+    "rejected_ev": 6364,
+    "by_side": {
+      "LONG": {
+        "trades": 1,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 0.0,
+        "net_r": -3.940263960412429
+      }
+    },
+    "by_regime": {
+      "BEAR_30D": {
+        "trades": 1,
+        "longs": 1,
+        "shorts": 0,
+        "win_rate_pct": 0.0,
+        "net_r": -3.940263960412429
+      }
+    }
+  },
+  {
+    "symbol": "AUDUSD",
+    "session": "london",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 158.3,
+    "train_bars": 50726,
+    "test_bars": 12682,
+    "avg_test_auc": 0.662,
+    "avg_test_bal_acc_pct": 50.0,
+    "avg_test_always0_pct": 91.59,
+    "val_chunk_nets_r": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12681,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "AUDUSD",
+    "session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 146.0,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.7354,
+    "avg_test_bal_acc_pct": 52.2,
+    "avg_test_always0_pct": 88.7,
+    "val_chunk_nets_r": [
+      13.86,
+      2.57,
+      0.0
+    ],
+    "trades": 65,
+    "win_rate_pct": 49.23,
+    "profit_factor": 0.92,
+    "net_r": -4.29,
+    "return_pct": -2.01,
+    "max_dd_pct": 11.68,
+    "avg_expected_ev_r": 0.128,
+    "avg_realized_r": -0.066,
+    "rejected_stand_down": 5,
+    "rejected_comm": 468,
+    "rejected_ev": 11957,
+    "by_side": {
+      "LONG": {
+        "trades": 36,
+        "tp_rate_pct": 19.444444444444443,
+        "win_rate_pct": 41.666666666666664,
+        "net_r": -10.375916881869687
+      },
+      "SHORT": {
+        "trades": 29,
+        "tp_rate_pct": 31.03448275862069,
+        "win_rate_pct": 58.62068965517241,
+        "net_r": 6.089403952084065
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 10,
+        "longs": 8,
+        "shorts": 2,
+        "win_rate_pct": 50.0,
+        "net_r": -5.5085909444262775
+      },
+      "BEAR_30D": {
+        "trades": 55,
+        "longs": 28,
+        "shorts": 27,
+        "win_rate_pct": 49.09090909090909,
+        "net_r": 1.2220780146406547
+      }
+    }
+  },
+  {
+    "symbol": "CADUSD",
+    "session": "asia",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 147.6,
+    "train_bars": 50819,
+    "test_bars": 12705,
+    "avg_test_auc": 0.7336,
+    "avg_test_bal_acc_pct": 50.45,
+    "avg_test_always0_pct": 89.62,
+    "val_chunk_nets_r": [
+      7.41,
+      -0.69,
+      -8.8
+    ],
+    "trades": 10,
+    "win_rate_pct": 30.0,
+    "profit_factor": 0.16,
+    "net_r": -12.29,
+    "return_pct": -3.14,
+    "max_dd_pct": 4.17,
+    "avg_expected_ev_r": 0.159,
+    "avg_realized_r": -1.229,
+    "rejected_stand_down": 6368,
+    "rejected_comm": 4521,
+    "rejected_ev": 1786,
+    "by_side": {
+      "LONG": {
+        "trades": 10,
+        "tp_rate_pct": 0.0,
+        "win_rate_pct": 30.0,
+        "net_r": -12.290179656550755
+      }
+    },
+    "by_regime": {
+      "BULL_30D": {
+        "trades": 1,
+        "longs": 1,
+        "shorts": 0,
+        "win_rate_pct": 100.0,
+        "net_r": 0.9864558516676888
+      },
+      "BEAR_30D": {
+        "trades": 9,
+        "longs": 9,
+        "shorts": 0,
+        "win_rate_pct": 22.22222222222222,
+        "net_r": -13.276635508218444
+      }
+    }
+  },
+  {
+    "symbol": "CADUSD",
+    "session": "london",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 147.5,
+    "train_bars": 50723,
+    "test_bars": 12681,
+    "avg_test_auc": 0.674,
+    "avg_test_bal_acc_pct": 50.09,
+    "avg_test_always0_pct": 91.92,
+    "val_chunk_nets_r": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12680,
+    "rejected_comm": 0,
+    "rejected_ev": 0,
+    "by_side": {},
+    "by_regime": {}
+  },
+  {
+    "symbol": "CADUSD",
+    "session": "ny",
+    "arch": "learned_10h",
+    "max_bars": 16,
+    "elapsed_s": 147.2,
+    "train_bars": 50712,
+    "test_bars": 12678,
+    "avg_test_auc": 0.7167,
+    "avg_test_bal_acc_pct": 50.04,
+    "avg_test_always0_pct": 90.86,
+    "val_chunk_nets_r": [
+      0.0,
+      0.0,
+      10.39
+    ],
+    "trades": 0,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "net_r": 0.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_expected_ev_r": null,
+    "avg_realized_r": null,
+    "rejected_stand_down": 12672,
+    "rejected_comm": 0,
+    "rejected_ev": 5,
+    "by_side": {},
+    "by_regime": {}
+  }
+]

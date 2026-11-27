@@ -20,6 +20,7 @@ import argparse
 import concurrent.futures
 import io
 import pathlib
+import time
 import urllib.error
 import urllib.request
 import zipfile
@@ -61,25 +62,36 @@ def _day_range(start_ymd: str, end_ymd: str) -> list[str]:
 
 
 def _parse_binance_ts(series: pd.Series) -> pd.DatetimeIndex:
-    """Convert Binance epoch timestamps (handles both ms and post-2025 us timestamps)."""
+    """Convert Binance epoch timestamps (handles both ms and post-2025 us timestamps) with uniform us resolution."""
     vals = pd.to_numeric(series, errors="coerce")
     # Post-Jan-2025 Binance spot archives use microseconds (> 1e14); earlier use milliseconds (~1.7e12).
     is_us = vals > 1e14
     ms_vals = np.where(is_us, vals // 1000, vals)
-    return pd.to_datetime(ms_vals, unit="ms", utc=True)
+    return pd.to_datetime(ms_vals, unit="ms", utc=True).astype("datetime64[us, UTC]")
 
 
-def _fetch_zip_csv(url: str, expected_cols: list[str] | None = None, timeout: int = 20) -> pd.DataFrame | None:
+def _fetch_zip_csv(url: str, expected_cols: list[str] | None = None, timeout: int = 25, retries: int = 4) -> pd.DataFrame | None:
     """Download a single Binance Vision ZIP archive and return its CSV as a DataFrame (or None if 404)."""
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = resp.read()
-    except urllib.error.HTTPError as exc:
-        if exc.code in (404, 403):
+    raw = None
+    for attempt in range(retries):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read()
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code in (404, 403):
+                return None
+            if exc.code in (429, 500, 502, 503, 504) and attempt + 1 < retries:
+                time.sleep(1.5 * (2 ** attempt))
+                continue
             return None
-        raise
-    except Exception:
+        except Exception:
+            if attempt + 1 < retries:
+                time.sleep(1.0 * (2 ** attempt))
+                continue
+            return None
+    if raw is None:
         return None
 
     with zipfile.ZipFile(io.BytesIO(raw)) as zf:
@@ -100,7 +112,7 @@ def _fetch_zip_csv(url: str, expected_cols: list[str] | None = None, timeout: in
     return df
 
 
-def _fetch_many(urls: list[str], expected_cols: list[str] | None = None, max_workers: int = 12) -> pd.DataFrame:
+def _fetch_many(urls: list[str], expected_cols: list[str] | None = None, max_workers: int = 8) -> pd.DataFrame:
     frames = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
         futures = [pool.submit(_fetch_zip_csv, u, expected_cols) for u in urls]
@@ -175,8 +187,8 @@ def download_funding_rates(pair: str, months: list[str]) -> pd.DataFrame:
     return out.dropna().drop_duplicates(subset="funding_time").sort_values("funding_time").reset_index(drop=True)
 
 
-def download_futures_metrics(pair: str, start_ymd: str, end_ymd: str) -> pd.DataFrame:
-    """Download daily 5m Open Interest & Long/Short metrics (available from 2021-12-01) and aggregate causally to 1h."""
+def download_futures_metrics(pair: str, start_ymd: str, end_ymd: str, timeframe: str = "1h") -> pd.DataFrame:
+    """Download daily 5m Open Interest & Long/Short metrics (available from 2021-12-01) and aggregate causally."""
     eff_start = max(pd.Timestamp(start_ymd, tz="UTC"), pd.Timestamp("2021-12-01", tz="UTC")).strftime("%Y-%m-%d")
     days = _day_range(eff_start, end_ymd)
     urls = [
@@ -189,8 +201,9 @@ def download_futures_metrics(pair: str, start_ymd: str, end_ymd: str) -> pd.Data
         return df
     df["create_time"] = pd.to_datetime(df["create_time"], utc=True, errors="coerce")
     df = df.dropna(subset=["create_time"]).sort_values("create_time")
-    # Causal hourly snapshot: take the last 5m metric snapshot inside [t, t+1h)
-    df["time"] = df["create_time"].dt.floor("1h")
+    # Causal bar snapshot: take the last 5m metric snapshot inside [t, t+timeframe)
+    freq = timeframe.replace("m", "min")
+    df["time"] = df["create_time"].dt.floor(freq).astype("datetime64[us, UTC]")
     keep_cols = [
         "sum_open_interest",
         "sum_open_interest_value",
@@ -202,14 +215,15 @@ def download_futures_metrics(pair: str, start_ymd: str, end_ymd: str) -> pd.Data
     present = [c for c in keep_cols if c in df.columns]
     for col in present:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-    hourly = df.groupby("time", sort=True)[present].last().reset_index()
-    return hourly
+    agg = df.groupby("time", sort=True)[present].last().reset_index()
+    return agg
 
 
 def build_symbol_dataset(
     symbol: str,
     start_ym: str,
     end_ym: str,
+    timeframe: str = "1h",
     include_metrics: bool = False,
 ) -> pathlib.Path:
     pair = f"{symbol.upper()}USDT"
@@ -217,35 +231,31 @@ def build_symbol_dataset(
     sym_dir.mkdir(parents=True, exist_ok=True)
     months = _month_range(start_ym, end_ym)
 
-    print(f"\n=== Downloading {pair} ({start_ym} -> {end_ym}, {len(months)} months) ===")
-    fut_1h = download_klines("futures/um", pair, "1h", months)
-    if fut_1h.empty:
-        raise RuntimeError(f"No futures 1h klines downloaded for {pair}. Check network access or symbol.")
-    print(f"  Futures 1h klines : {len(fut_1h):,} rows ({fut_1h['time'].iloc[0]} -> {fut_1h['time'].iloc[-1]})")
+    print(f"\n=== Downloading {pair} {timeframe} ({start_ym} -> {end_ym}, {len(months)} months) ===")
+    fut_tf = download_klines("futures/um", pair, timeframe, months)
+    if fut_tf.empty:
+        raise RuntimeError(f"No futures {timeframe} klines downloaded for {pair}. Check network access or symbol.")
+    print(f"  Futures {timeframe} klines : {len(fut_tf):,} rows ({fut_tf['time'].iloc[0]} -> {fut_tf['time'].iloc[-1]})")
 
-    spot_1h = download_klines("spot", pair, "1h", months)
-    print(f"  Spot 1h klines    : {len(spot_1h):,} rows")
+    spot_tf = download_klines("spot", pair, timeframe, months)
+    print(f"  Spot {timeframe} klines    : {len(spot_tf):,} rows")
 
-    prem_1h = download_premium_index(pair, "1h", months)
-    print(f"  Premium 1h klines : {len(prem_1h):,} rows")
+    prem_tf = download_premium_index(pair, timeframe, months)
+    print(f"  Premium {timeframe} klines : {len(prem_tf):,} rows")
 
     funding = download_funding_rates(pair, months)
     print(f"  Funding 8h rates  : {len(funding):,} rows")
 
-    # Also save 4h and 15m futures klines so multi-timeframe models work seamlessly on datapoints_new/
-    fut_4h = download_klines("futures/um", pair, "4h", months)
-    print(f"  Futures 4h klines : {len(fut_4h):,} rows")
-
-    # Build enriched strictly-causal 1h table
-    df = fut_1h.copy()
+    # Build enriched strictly-causal table
+    df = fut_tf.copy()
     eps = 1e-10
     df["taker_sell_volume"] = (df["volume"] - df["taker_buy_volume"]).clip(lower=0.0)
     df["volume_delta"] = df["taker_buy_volume"] - df["taker_sell_volume"]
     df["taker_buy_ratio"] = (df["taker_buy_volume"] / (df["volume"] + eps)).clip(0.0, 1.0)
     df["avg_trade_size"] = df["quote_volume"] / (df["count"] + eps)
 
-    if not spot_1h.empty:
-        spot_sub = spot_1h[["time", "close", "volume", "count", "taker_buy_volume"]].rename(
+    if not spot_tf.empty:
+        spot_sub = spot_tf[["time", "close", "volume", "count", "taker_buy_volume"]].rename(
             columns={
                 "close": "spot_close",
                 "volume": "spot_volume",
@@ -258,11 +268,13 @@ def build_symbol_dataset(
         df["perp_spot_basis"] = (df["close"] - df["spot_close"]) / (df["spot_close"] + eps)
         df["perp_to_spot_vol_ratio"] = df["volume"] / (df["spot_volume"] + eps)
 
-    if not prem_1h.empty:
-        df = df.merge(prem_1h, on="time", how="left")
+    if not prem_tf.empty:
+        df = df.merge(prem_tf, on="time", how="left")
 
     if not funding.empty:
-        df["candle_close_time"] = df["time"] + pd.Timedelta("1h")
+        df["candle_close_time"] = (df["time"] + pd.Timedelta(timeframe)).astype("datetime64[us, UTC]")
+        funding = funding.copy()
+        funding["funding_time"] = funding["funding_time"].astype("datetime64[us, UTC]")
         df = pd.merge_asof(
             df.sort_values("candle_close_time"),
             funding.sort_values("funding_time"),
@@ -278,27 +290,29 @@ def build_symbol_dataset(
 
     if include_metrics:
         end_ymd = (pd.Timestamp(f"{end_ym}-01", tz="UTC") + pd.offsets.MonthEnd(0)).strftime("%Y-%m-%d")
-        metrics_1h = download_futures_metrics(pair, f"{start_ym}-01", end_ymd)
-        print(f"  Metrics 1h (OI/LS): {len(metrics_1h):,} rows")
-        if not metrics_1h.empty:
-            df = df.merge(metrics_1h, on="time", how="left")
+        metrics_tf = download_futures_metrics(pair, f"{start_ym}-01", end_ymd, timeframe=timeframe)
+        print(f"  Metrics {timeframe} (OI/LS): {len(metrics_tf):,} rows")
+        if not metrics_tf.empty:
+            df = df.merge(metrics_tf, on="time", how="left")
 
     df = df.sort_values("time").drop_duplicates(subset="time").reset_index(drop=True)
 
-    # Save enriched 1h dataset + clean 4h dataset
-    out_1h = sym_dir / f"{symbol.upper()}_1h.csv"
-    df.to_csv(out_1h, index=False)
-    print(f"Saved enriched 1h dataset -> {out_1h} ({len(df):,} rows, {len(df.columns)} columns)")
+    out_path = sym_dir / f"{symbol.upper()}_{timeframe}.csv"
+    df.to_csv(out_path, index=False)
+    print(f"Saved enriched {timeframe} dataset -> {out_path} ({len(df):,} rows, {len(df.columns)} columns)")
 
-    if not fut_4h.empty:
-        fut_4h["taker_sell_volume"] = (fut_4h["volume"] - fut_4h["taker_buy_volume"]).clip(lower=0.0)
-        fut_4h["volume_delta"] = fut_4h["taker_buy_volume"] - fut_4h["taker_sell_volume"]
-        fut_4h["taker_buy_ratio"] = (fut_4h["taker_buy_volume"] / (fut_4h["volume"] + eps)).clip(0.0, 1.0)
-        out_4h = sym_dir / f"{symbol.upper()}_4h.csv"
-        fut_4h.to_csv(out_4h, index=False)
-        print(f"Saved futures 4h dataset  -> {out_4h} ({len(fut_4h):,} rows, {len(fut_4h.columns)} columns)")
+    if timeframe == "1h":
+        fut_4h = download_klines("futures/um", pair, "4h", months)
+        print(f"  Futures 4h klines : {len(fut_4h):,} rows")
+        if not fut_4h.empty:
+            fut_4h["taker_sell_volume"] = (fut_4h["volume"] - fut_4h["taker_buy_volume"]).clip(lower=0.0)
+            fut_4h["volume_delta"] = fut_4h["taker_buy_volume"] - fut_4h["taker_sell_volume"]
+            fut_4h["taker_buy_ratio"] = (fut_4h["taker_buy_volume"] / (fut_4h["volume"] + eps)).clip(0.0, 1.0)
+            out_4h = sym_dir / f"{symbol.upper()}_4h.csv"
+            fut_4h.to_csv(out_4h, index=False)
+            print(f"Saved futures 4h dataset  -> {out_4h} ({len(fut_4h):,} rows, {len(fut_4h.columns)} columns)")
 
-    return out_1h
+    return out_path
 
 
 def main():
@@ -325,6 +339,13 @@ def main():
         help=f"End month YYYY-MM (default: {now_ym})",
     )
     parser.add_argument(
+        "--timeframe",
+        type=str,
+        default="1h",
+        choices=["5m", "15m", "30m", "1h", "4h"],
+        help="Candle timeframe to download (default: 1h)",
+    )
+    parser.add_argument(
         "--include-metrics",
         action="store_true",
         help="Also download daily 5m Open Interest & Long/Short ratio archives (slower, ~1,500 files)",
@@ -333,7 +354,7 @@ def main():
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for sym in args.symbols:
-        build_symbol_dataset(sym, args.start, args.end, include_metrics=args.include_metrics)
+        build_symbol_dataset(sym, args.start, args.end, timeframe=args.timeframe, include_metrics=args.include_metrics)
 
 
 if __name__ == "__main__":

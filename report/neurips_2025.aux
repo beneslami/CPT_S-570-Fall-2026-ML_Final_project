@@ -1,0 +1,143 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{Fama1970}
+\citation{Kyle1985}
+\citation{Amihud2002}
+\citation{Islam2025IJAES}
+\citation{Bansal2022}
+\citation{Bustos2025}
+\citation{LopezDePrado2018}
+\citation{Bansal2022}
+\citation{Islam2025IJAES}
+\citation{Kyle1985}
+\citation{Amihud2002}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{2}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Main Contributions.}{2}{section*.1}\protected@file@percent }
+\citation{Islam2025JoE}
+\citation{Bustos2025}
+\citation{LopezDePrado2018}
+\citation{Grinsztajn2022}
+\citation{Chen2016}
+\citation{Hochreiter1997}
+\citation{Platt1999,Guo2017}
+\citation{Bailey2014}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work and Common Mistakes in Financial ML}{3}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{3}{Related Work and Common Mistakes in Financial ML}{section.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Problem Formulation and Fee-Adjusted Expected-Value Theory}{3}{section.3}\protected@file@percent }
+\newlabel{sec:theory}{{3}{3}{Problem Formulation and Fee-Adjusted Expected-Value Theory}{section.3}{}}
+\newlabel{eq:barriers}{{1}{3}{Problem Formulation and Fee-Adjusted Expected-Value Theory}{equation.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Exact Fee-Adjusted Expected Value and Conservative Gating}{3}{subsection.3.1}\protected@file@percent }
+\newlabel{eq:ev_exact}{{2}{3}{Exact Fee-Adjusted Expected Value and Conservative Gating}{equation.2}{}}
+\newlabel{eq:ev_simplified}{{3}{4}{Exact Fee-Adjusted Expected Value and Conservative Gating}{equation.3}{}}
+\newlabel{eq:p_be}{{4}{4}{Exact Fee-Adjusted Expected Value and Conservative Gating}{equation.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Exact Three-Outcome Expected Value vs.\ Conservative Entry Gate.}{4}{section*.2}\protected@file@percent }
+\newlabel{eq:ev_3outcome}{{5}{4}{Exact Three-Outcome Expected Value vs.\ Conservative Entry Gate}{equation.5}{}}
+\newlabel{eq:ev_gap}{{6}{4}{Exact Three-Outcome Expected Value vs.\ Conservative Entry Gate}{equation.6}{}}
+\newlabel{rem:asymmetric}{{1}{4}{Why a $30\%$--$35\%$ Win Rate Can Still Be Profitable}{remark.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Universal Micro-Stop Fee Gate Across Asset Classes}{4}{subsection.3.2}\protected@file@percent }
+\newlabel{eq:fee_r}{{7}{4}{Universal Micro-Stop Fee Gate Across Asset Classes}{equation.7}{}}
+\newlabel{eq:fee_gate}{{8}{4}{Universal Micro-Stop Fee Gate Across Asset Classes}{equation.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {Fee drag and calibration-error geometry.} \textbf  {(a)} Round-trip fee drag $\mathrm  {Fee}_R\approx 2c/\mathrm  {sl\_pct}$ across all three asset-class fee tiers; one rule ($\mathrm  {Fee}_R\le 0.05R$) automatically adapts minimum stop width to Forex ($0.08\%$), US equity indices ($0.20\%$), and crypto ($0.40\%$). \textbf  {(b)} A $+2\text  { pp}$ probability overestimate inflates raw $\mathrm  {EV}_R$ linearly by $(\mathrm  {RR}+1)\epsilon $, biasing selection toward noisy $4{:}1$ targets, whereas Per-Trade Sharpe $S = \mathrm  {EV}_R/ \mathrm  {Std}_R$ removes the $(\mathrm  {RR}+1)$ multiplier.}}{5}{figure.1}\protected@file@percent }
+\newlabel{fig:ev_theory}{{1}{5}{\textbf {Fee drag and calibration-error geometry.} \textbf {(a)} Round-trip fee drag $\FeeR \approx 2c/\mathrm {sl\_pct}$ across all three asset-class fee tiers; one rule ($\FeeR \le 0.05R$) automatically adapts minimum stop width to Forex ($0.08\%$), US equity indices ($0.20\%$), and crypto ($0.40\%$). \textbf {(b)} A $+2\text { pp}$ probability overestimate inflates raw $\EVR $ linearly by $(\RR +1)\epsilon $, biasing selection toward noisy $4{:}1$ targets, whereas Per-Trade Sharpe $S = \EVR / \StdR $ removes the $(\RR +1)$ multiplier}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Removing $(\mathrm  {RR}+1)$ Calibration Noise with Per-Trade Sharpe Selection}{5}{subsection.3.3}\protected@file@percent }
+\newlabel{prop:sharpe}{{1}{5}{Calibration Error Growth and Sharpe Cancellation}{proposition.1}{}}
+\newlabel{eq:ev_noise}{{9}{5}{Calibration Error Growth and Sharpe Cancellation}{equation.9}{}}
+\newlabel{eq:sharpe_score}{{10}{5}{Calibration Error Growth and Sharpe Cancellation}{equation.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Position Sizing and Evaluation Metrics}{5}{subsection.3.4}\protected@file@percent }
+\newlabel{eq:sizing}{{11}{5}{Position Sizing and Evaluation Metrics}{equation.11}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Data Collection, Preparation, and Leakage-Free Design}{5}{section.4}\protected@file@percent }
+\newlabel{sec:data}{{4}{5}{Data Collection, Preparation, and Leakage-Free Design}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Cross-Asset Data Collection (9 Symbols Across 3 Asset Classes)}{5}{subsection.4.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces \textbf  {Nine-symbol cross-asset dataset inventory ($15\text  {m}$ primary + $1\text  {h}$/$4\text  {h}$ auxiliary, UTC).} All outer train/test splits are strictly time-ordered ($80\%/20\%$), placing all nine out-of-sample test windows in June 2025--October 2026. Fee $c$ reflects realistic institutional costs per side for each asset class.}}{6}{table.1}\protected@file@percent }
+\newlabel{tab:datasets}{{1}{6}{\textbf {Nine-symbol cross-asset dataset inventory ($15\text {m}$ primary + $1\text {h}$/$4\text {h}$ auxiliary, UTC).} All outer train/test splits are strictly time-ordered ($80\%/20\%$), placing all nine out-of-sample test windows in June 2025--October 2026. Fee $c$ reflects realistic institutional costs per side for each asset class}{table.1}{}}
+\newlabel{eq:invert_ohlc}{{12}{6}{Cross-Asset Data Collection (9 Symbols Across 3 Asset Classes)}{equation.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Close-Time Alignment and Continuous-Candle Entry-Session Masking}{6}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{1. Close-Time Higher-Timeframe Alignment.}{6}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2. Continuous-Candle Entry-Session Masking (Avoiding Phantom Gap Bias).}{6}{section*.4}\protected@file@percent }
+\citation{LopezDePrado2018}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Purged 4-Way Chronological Partitioning and Feature Selection}{7}{subsection.4.3}\protected@file@percent }
+\newlabel{eq:purged_split}{{13}{7}{Purged 4-Way Chronological Partitioning and Feature Selection}{equation.13}{}}
+\@writefile{toc}{\contentsline {paragraph}{Causal Feature Engineering and Selection.}{7}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Model Architectures and Training Methodology}{7}{section.5}\protected@file@percent }
+\newlabel{sec:models}{{5}{7}{Model Architectures and Training Methodology}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Phase 1: Three-Model Next-Candle Consensus (\texttt  {BTC 1h})}{7}{subsection.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {End-to-end leakage-free architecture.} \textbf  {(a)} Inside each $180$-day expanding walk-forward window, four time-ordered partitions are separated by $g=32$-bar purge gaps, with fresh rolling $2$-year out-of-fold Stage-1 stop models. \textbf  {(b)} All features and open-trade exits run on $100\%$ continuous real candles while training, calibration, and new entries are masked to the chosen market session.}}{8}{figure.2}\protected@file@percent }
+\newlabel{fig:architecture}{{2}{8}{\textbf {End-to-end leakage-free architecture.} \textbf {(a)} Inside each $180$-day expanding walk-forward window, four time-ordered partitions are separated by $g=32$-bar purge gaps, with fresh rolling $2$-year out-of-fold Stage-1 stop models. \textbf {(b)} All features and open-trade exits run on $100\%$ continuous real candles while training, calibration, and new entries are masked to the chosen market session}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Phase 2: Two-Stage Factorized Multi-R:R Bracket Model (\texttt  {15m})}{8}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Stage 1: Fresh Rolling $2$-Year ATR-Normalized Stop-Losses.}{8}{section*.6}\protected@file@percent }
+\newlabel{eq:mae}{{14}{8}{Stage 1: Fresh Rolling $2$-Year ATR-Normalized Stop-Losses}{equation.14}{}}
+\newlabel{eq:stage1_sl}{{15}{8}{Stage 1: Fresh Rolling $2$-Year ATR-Normalized Stop-Losses}{equation.15}{}}
+\@writefile{toc}{\contentsline {paragraph}{Stage 2: Chain-Rule Factorized Heads, Lagged 60-Day Recalibration, and Monotone Projection.}{8}{section*.7}\protected@file@percent }
+\citation{Bustos2025}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Leakage-Free Continuous-Candle Walk-Forward Multi-R:R Training and Execution (V2.2)}}{9}{algorithm.1}\protected@file@percent }
+\newlabel{alg:multirr}{{1}{9}{Stage 3: Conservative Validation Thresholding and Automatic Stand-Down}{algorithm.1}{}}
+\newlabel{eq:factorized}{{16}{9}{Stage 2: Chain-Rule Factorized Heads, Lagged 60-Day Recalibration, and Monotone Projection}{equation.16}{}}
+\newlabel{eq:rolling_cal}{{17}{9}{Stage 2: Chain-Rule Factorized Heads, Lagged 60-Day Recalibration, and Monotone Projection}{equation.17}{}}
+\@writefile{toc}{\contentsline {paragraph}{Stage 3: Conservative Validation Thresholding and Automatic Stand-Down.}{9}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Experimental Results}{9}{section.6}\protected@file@percent }
+\newlabel{sec:results}{{6}{9}{Experimental Results}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Phase 1: Why Next-Candle Prediction Fails (\texttt  {BTC 1h})}{9}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:phase1_results}{{6.1}{9}{Phase 1: Why Next-Candle Prediction Fails (\texttt {BTC 1h})}{subsection.6.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces \textbf  {Phase-1 \texttt  {BTC 1h} next-candle directional benchmark ($59{,}904$ bars, $2020$--$2026$).} Left: $3$-fold walk-forward ($44{,}911$ OOS hours). Right: $11{,}979$-hour holdout (majority baseline $49.97\%$; $p<0.001$).}}{10}{table.2}\protected@file@percent }
+\newlabel{tab:phase1}{{2}{10}{\textbf {Phase-1 \texttt {BTC 1h} next-candle directional benchmark ($59{,}904$ bars, $2020$--$2026$).} Left: $3$-fold walk-forward ($44{,}911$ OOS hours). Right: $11{,}979$-hour holdout (majority baseline $49.97\%$; $p<0.001$)}{table.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Phase-1 \texttt  {BTC 1h} directional results.} \textbf  {(a)} Ensembles beat single models, but accuracy declines steadily from Fold~1 to Fold~3 as the market matures. \textbf  {(b)} High-confidence bars reach $59.05\%$ accuracy, yet mapping $1$-hour probabilities to $24$--$48$h brackets passes $0 / 11{,}979$ EV checks.}}{10}{figure.3}\protected@file@percent }
+\newlabel{fig:phase1}{{3}{10}{\textbf {Phase-1 \texttt {BTC 1h} directional results.} \textbf {(a)} Ensembles beat single models, but accuracy declines steadily from Fold~1 to Fold~3 as the market matures. \textbf {(b)} High-confidence bars reach $59.05\%$ accuracy, yet mapping $1$-hour probabilities to $24$--$48$h brackets passes $0 / 11{,}979$ EV checks}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Phase 2: Payoff Audit and Architecture Comparison on \texttt  {BTC} and \texttt  {ETH}}{10}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:audit}{{6.2}{10}{Phase 2: Payoff Audit and Architecture Comparison on \texttt {BTC} and \texttt {ETH}}{subsection.6.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces \textbf  {Controlled payoff and architecture audit on continuous 24/7 \texttt  {BTC} and \texttt  {ETH} ($15\text  {m}$ OOS, $c=1.0\text  { bp}$/side, $\mathrm  {Fee}_R\le 0.05R$).} Top: crediting timeouts (V2, V2.1, V3) degrades trade selection. Bottom: conservative lower-bound gating (V2.2) succeeds with both Fresh-S1 10-Head and Fixed-ATR 2-Head.}}{11}{table.3}\protected@file@percent }
+\newlabel{tab:btc_eth_audit}{{3}{11}{\textbf {Controlled payoff and architecture audit on continuous 24/7 \texttt {BTC} and \texttt {ETH} ($15\text {m}$ OOS, $c=1.0\text { bp}$/side, $\FeeR \le 0.05R$).} Top: crediting timeouts (V2, V2.1, V3) degrades trade selection. Bottom: conservative lower-bound gating (V2.2) succeeds with both Fresh-S1 10-Head and Fixed-ATR 2-Head}{table.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {OOS probability calibration and 10-head ROC-AUC across asset classes (real saved logs).} \textbf  {(a)} After lagged $60$-day prior-shift recalibration, mean probability bias across all $10$ heads stays low across \texttt  {BTC}, \texttt  {ETH}, \texttt  {JPYUSD} (London), and \texttt  {AUDUSD} (New York). \textbf  {(b)} OOS ROC-AUC climbs steadily with $\mathrm  {RR}$ across crypto and active-session Forex heads, while \texttt  {NDX} NY-RTH remains weaker on pure OHLCV.}}{11}{figure.4}\protected@file@percent }
+\newlabel{fig:cal_auc}{{4}{11}{\textbf {OOS probability calibration and 10-head ROC-AUC across asset classes (real saved logs).} \textbf {(a)} After lagged $60$-day prior-shift recalibration, mean probability bias across all $10$ heads stays low across \texttt {BTC}, \texttt {ETH}, \texttt {JPYUSD} (London), and \texttt {AUDUSD} (New York). \textbf {(b)} OOS ROC-AUC climbs steadily with $\RR $ across crypto and active-session Forex heads, while \texttt {NDX} NY-RTH remains weaker on pure OHLCV}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}How Market Time Zones Control Profitability Across All Nine Symbols}{11}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:timezone_results}{{6.3}{11}{How Market Time Zones Control Profitability Across All Nine Symbols}{subsection.6.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Payoff ablation and clean OOS equity curves.} \textbf  {(a)} Crediting timeout payoffs inside the entry gate fails on \texttt  {BTC} and \texttt  {ETH}, whereas conservative EV succeeds on both Fixed-ATR and Fresh-S1 10-Head. \textbf  {(b)} Step-by-step realized Net $R$ curves from saved logs across crypto, Forex, and US equity indices (showing how NY-RTH masking eliminates the $-27.05R$ \texttt  {NDX} 24h loss).}}{12}{figure.5}\protected@file@percent }
+\newlabel{fig:v2_audit}{{5}{12}{\textbf {Payoff ablation and clean OOS equity curves.} \textbf {(a)} Crediting timeout payoffs inside the entry gate fails on \texttt {BTC} and \texttt {ETH}, whereas conservative EV succeeds on both Fixed-ATR and Fresh-S1 10-Head. \textbf {(b)} Step-by-step realized Net $R$ curves from saved logs across crypto, Forex, and US equity indices (showing how NY-RTH masking eliminates the $-27.05R$ \texttt {NDX} 24h loss)}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.3.1}G10 Forex Time Zone Analysis (5 Pairs $\times $ 5 Sessions)}{12}{subsubsection.6.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.3.2}Crypto (24/7 vs.\ Weekdays) and US Equity Indices (24h vs.\ New York RTH)}{12}{subsubsection.6.3.2}\protected@file@percent }
+\citation{Bustos2025}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces \textbf  {G10 Forex time zone comparison across all five pairs ($15\text  {m}$ OOS, $100\%$ continuous real candles, $c=0.2\text  { bp}$/side, $H=32$).} Every cell reports realized OOS Net $R$ and mean OOS ROC-AUC in parentheses. Asia behaves like coin-flip noise ($\mathrm  {AUC}=0.513$), while New York (Fixed-ATR) and London (Learned-SL) produce $+16.49R$ and $+18.32R$ with zero losing pairs.}}{13}{table.4}\protected@file@percent }
+\newlabel{tab:fx_timezones}{{4}{13}{\textbf {G10 Forex time zone comparison across all five pairs ($15\text {m}$ OOS, $100\%$ continuous real candles, $c=0.2\text { bp}$/side, $H=32$).} Every cell reports realized OOS Net $R$ and mean OOS ROC-AUC in parentheses. Asia behaves like coin-flip noise ($\mathrm {AUC}=0.513$), while New York (Fixed-ATR) and London (Learned-SL) produce $+16.49R$ and $+18.32R$ with zero losing pairs}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Honest Discussion, Limitations, and Future Work}{13}{section.7}\protected@file@percent }
+\newlabel{sec:discussion}{{7}{13}{Honest Discussion, Limitations, and Future Work}{section.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \textbf  {Cross-asset session comparison for Crypto (\texttt  {BTC}, \texttt  {ETH}) and US Equity Indices (\texttt  {SPX}, \texttt  {NDX}).} All primary rows use $100\%$ continuous real candles with entry-only session masking. The bottom two rows show naive CSV row deletion for contrast, proving how row deletion creates fake losses on crypto and fake gap profits on \texttt  {SPX}.}}{14}{table.5}\protected@file@percent }
+\newlabel{tab:cross_asset_sessions}{{5}{14}{\textbf {Cross-asset session comparison for Crypto (\texttt {BTC}, \texttt {ETH}) and US Equity Indices (\texttt {SPX}, \texttt {NDX}).} All primary rows use $100\%$ continuous real candles with entry-only session masking. The bottom two rows show naive CSV row deletion for contrast, proving how row deletion creates fake losses on crypto and fake gap profits on \texttt {SPX}}{table.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Impact of market time zones on strategy profit across all three asset classes (100\% continuous real candles).} \textbf  {(a)} Heatmap of OOS Net $R$ and (AUC) across all five G10 Forex pairs and five trading sessions (Fixed-ATR 2H): Asia behaves like noise ($\mathrm  {AUC}=0.513$, $-42.28R$), while New York achieves the highest AUC on every pair ($0.643$) and $+16.49R$ with zero losers. \textbf  {(b)} Basket Net $R$ comparison across FX sessions, Crypto (showing the $-47.15R$ row-deletion bug vs.\ clean weekday masking and 24/7), and US equity indices (24h overnight trap vs.\ clean NY-RTH).}}{14}{figure.6}\protected@file@percent }
+\newlabel{fig:timezone}{{6}{14}{\textbf {Impact of market time zones on strategy profit across all three asset classes (100\% continuous real candles).} \textbf {(a)} Heatmap of OOS Net $R$ and (AUC) across all five G10 Forex pairs and five trading sessions (Fixed-ATR 2H): Asia behaves like noise ($\mathrm {AUC}=0.513$, $-42.28R$), while New York achieves the highest AUC on every pair ($0.643$) and $+16.49R$ with zero losers. \textbf {(b)} Basket Net $R$ comparison across FX sessions, Crypto (showing the $-47.15R$ row-deletion bug vs.\ clean weekday masking and 24/7), and US equity indices (24h overnight trap vs.\ clean NY-RTH)}{figure.6}{}}
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{Amihud2002}{{1}{2002}{{Amihud}}{{}}}
+\bibcite{Bailey2014}{{2}{2014}{{Bailey and L{\'o}pez~de Prado}}{{}}}
+\bibcite{Bansal2022}{{3}{2022}{{Bansal et~al.}}{{Bansal, Goyal, and Choudhary}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \textbf  {Real OOS $15\text  {m}$ execution examples from saved trade logs.} \textbf  {(a)} \texttt  {ETH} 24/7 Fixed-ATR ($2.5{:}1$, Feb 1--2, 2026): two clean short take-profits ($+2.47R, +2.49R$) and one stop-out ($-1.01R$), netting $+3.95R$. \textbf  {(b)} \texttt  {JPYUSD} London Learned-SL (Jun 20, 2025): a controlled $-1.04R$ stop-out followed by a $3.0{:}1$ short breakdown ($+2.96R$) into the London--NY overlap, netting $+1.92R$. Shaded zones show exact $\mathrm  {SL}$ and $\mathrm  {TP}$ levels.}}{15}{figure.7}\protected@file@percent }
+\newlabel{fig:exec_zoom}{{7}{15}{\textbf {Real OOS $15\text {m}$ execution examples from saved trade logs.} \textbf {(a)} \texttt {ETH} 24/7 Fixed-ATR ($2.5{:}1$, Feb 1--2, 2026): two clean short take-profits ($+2.47R, +2.49R$) and one stop-out ($-1.01R$), netting $+3.95R$. \textbf {(b)} \texttt {JPYUSD} London Learned-SL (Jun 20, 2025): a controlled $-1.04R$ stop-out followed by a $3.0{:}1$ short breakdown ($+2.96R$) into the London--NY overlap, netting $+1.92R$. Shaded zones show exact $\SL $ and $\TP $ levels}{figure.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{Future Work.}{15}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{15}{section.8}\protected@file@percent }
+\newlabel{sec:conclusion}{{8}{15}{Conclusion}{section.8}{}}
+\bibcite{Bustos2025}{{4}{2025}{{Bustos et~al.}}{{Bustos, Pomares-Quimbaya, and Stellian}}}
+\bibcite{Chen2016}{{5}{2016}{{Chen and Guestrin}}{{}}}
+\bibcite{Fama1970}{{6}{1970}{{Fama}}{{}}}
+\bibcite{Grinsztajn2022}{{7}{2022}{{Grinsztajn et~al.}}{{Grinsztajn, Oyallon, and Varoquaux}}}
+\bibcite{Guo2017}{{8}{2017}{{Guo et~al.}}{{Guo, Pleiss, Sun, and Weinberger}}}
+\bibcite{Hochreiter1997}{{9}{1997}{{Hochreiter and Schmidhuber}}{{}}}
+\bibcite{Islam2025JoE}{{10}{2025{}}{{Islam et~al.}}{{Islam, Bashir, Rahman, Al~Montaser, Bortty, Nishan, and Haque}}}
+\bibcite{Islam2025IJAES}{{11}{2025{}}{{Islam et~al.}}{{Islam, Rahman, Sumsuzoha, Sarker, Islam, Alam, and Shil}}}
+\bibcite{Kyle1985}{{12}{1985}{{Kyle}}{{}}}
+\bibcite{LopezDePrado2018}{{13}{2018}{{L{\'o}pez~de Prado}}{{}}}
+\bibcite{Platt1999}{{14}{1999}{{Platt}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Causal Feature Groups}{17}{appendix.A}\protected@file@percent }
+\newlabel{app:features}{{A}{17}{Causal Feature Groups}{appendix.A}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces \textbf  {Strictly causal feature groups ($123$ pure-OHLCV features; $139$--$141$ with Binance order flow).}}}{17}{table.6}\protected@file@percent }
+\newlabel{tab:app_features}{{6}{17}{\textbf {Strictly causal feature groups ($123$ pure-OHLCV features; $139$--$141$ with Binance order flow).}}{table.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B}Per-Head Out-of-Sample Calibration and AUC Diagnostics}{17}{appendix.B}\protected@file@percent }
+\newlabel{app:heads}{{B}{17}{Per-Head Out-of-Sample Calibration and AUC Diagnostics}{appendix.B}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces \textbf  {Per-head OOS diagnostics from saved V2.2 Fresh-S1 10-Head JSON logs.} For each head, $\bar  {y}$ is realized OOS TP hit rate (\%), $\bar  {\hat  {p}}$ is mean causally recalibrated probability (\%), and AUC is OOS ROC-AUC.}}{17}{table.7}\protected@file@percent }
+\newlabel{tab:app_heads}{{7}{17}{\textbf {Per-head OOS diagnostics from saved V2.2 Fresh-S1 10-Head JSON logs.} For each head, $\bar {y}$ is realized OOS TP hit rate (\%), $\bar {\hat {p}}$ is mean causally recalibrated probability (\%), and AUC is OOS ROC-AUC}{table.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Verified Sample Out-of-Sample Trade Ledger and Reproducibility}{17}{appendix.C}\protected@file@percent }
+\newlabel{app:ledger}{{C}{17}{Verified Sample Out-of-Sample Trade Ledger and Reproducibility}{appendix.C}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces \textbf  {Verified OOS UTC trade ledger corresponding to Figure~\ref {fig:exec_zoom}.}}}{18}{table.8}\protected@file@percent }
+\newlabel{tab:app_ledger}{{8}{18}{\textbf {Verified OOS UTC trade ledger corresponding to Figure~\ref {fig:exec_zoom}.}}{table.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{Reproducibility.}{18}{section*.11}\protected@file@percent }
+\gdef \@abspage@last{18}

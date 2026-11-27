@@ -1,0 +1,104 @@
+\begin{thebibliography}{14}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Amihud(2002)]{Amihud2002}
+Yakov Amihud.
+\newblock Illiquidity and stock returns: cross-section and time-series effects.
+\newblock \emph{Journal of Financial Markets}, 5\penalty0 (1):\penalty0 31--56,
+  2002.
+
+\bibitem[Bailey and L{\'o}pez~de Prado(2014)]{Bailey2014}
+David~H. Bailey and Marcos L{\'o}pez~de Prado.
+\newblock The deflated sharpe ratio: Correcting for selection bias, backtest
+  overfitting, and non-normality.
+\newblock \emph{The Journal of Portfolio Management}, 40\penalty0 (5):\penalty0
+  94--107, 2014.
+
+\bibitem[Bansal et~al.(2022)Bansal, Goyal, and Choudhary]{Bansal2022}
+Meharvijit Bansal, Apoorva Goyal, and Apoorva Choudhary.
+\newblock Stock market prediction with high accuracy using machine learning
+  techniques.
+\newblock \emph{Procedia Computer Science}, 215:\penalty0 247--265, 2022.
+\newblock \doi{10.1016/j.procs.2022.12.028}.
+
+\bibitem[Bustos et~al.(2025)Bustos, Pomares-Quimbaya, and Stellian]{Bustos2025}
+Oscar Bustos, Alexandra Pomares-Quimbaya, and R{\'e}mi Stellian.
+\newblock Machine learning, stock market forecasting, and market efficiency: a
+  comparative study.
+\newblock \emph{International Journal of Data Science and Analytics},
+  20:\penalty0 6815--6839, 2025.
+\newblock \doi{10.1007/s41060-025-00854-4}.
+
+\bibitem[Chen and Guestrin(2016)]{Chen2016}
+Tianqi Chen and Carlos Guestrin.
+\newblock {XGBoost}: A scalable tree boosting system.
+\newblock In \emph{Proceedings of the 22nd ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining (KDD)}, pages 785--794, 2016.
+
+\bibitem[Fama(1970)]{Fama1970}
+Eugene~F. Fama.
+\newblock Efficient capital markets: A review of theory and empirical work.
+\newblock \emph{The Journal of Finance}, 25\penalty0 (2):\penalty0 383--417,
+  1970.
+
+\bibitem[Grinsztajn et~al.(2022)Grinsztajn, Oyallon, and
+  Varoquaux]{Grinsztajn2022}
+L{\'e}o Grinsztajn, Edouard Oyallon, and Ga{\"e}l Varoquaux.
+\newblock Why do tree-based models still outperform deep learning on typical
+  tabular data?
+\newblock In \emph{Advances in Neural Information Processing Systems
+  (NeurIPS)}, volume~35, pages 507--520, 2022.
+
+\bibitem[Guo et~al.(2017)Guo, Pleiss, Sun, and Weinberger]{Guo2017}
+Chuan Guo, Geoff Pleiss, Yu~Sun, and Kilian~Q. Weinberger.
+\newblock On calibration of modern neural networks.
+\newblock In \emph{Proceedings of the 34th International Conference on Machine
+  Learning (ICML)}, pages 1321--1330, 2017.
+
+\bibitem[Hochreiter and Schmidhuber(1997)]{Hochreiter1997}
+Sepp Hochreiter and J{\"u}rgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock \emph{Neural Computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+
+\bibitem[Islam et~al.(2025{\natexlab{a}})Islam, Bashir, Rahman, Al~Montaser,
+  Bortty, Nishan, and Haque]{Islam2025JoE}
+Md~Shahinul Islam, Muhammad Bashir, Shafiur Rahman, Md~Abdullah Al~Montaser,
+  Joyanta~Chandra Bortty, Arafat Nishan, and Md~Rashedul Haque.
+\newblock Machine learning-based cryptocurrency prediction: Enhancing market
+  forecasting with advanced predictive models.
+\newblock \emph{Journal of Ecohumanism}, 4\penalty0 (2):\penalty0 2498--2519,
+  2025{\natexlab{a}}.
+\newblock \doi{10.62754/joe.v4i2.6663}.
+
+\bibitem[Islam et~al.(2025{\natexlab{b}})Islam, Rahman, Sumsuzoha, Sarker,
+  Islam, Alam, and Shil]{Islam2025IJAES}
+Md~Zahidul Islam, Md~Shafiur Rahman, Md~Sumsuzoha, Biplob Sarker, Md~Rashedul
+  Islam, Md~Alam, and Sajib~Kumar Shil.
+\newblock Cryptocurrency price forecasting using machine learning: Building
+  intelligent financial prediction models.
+\newblock \emph{International Journal of Accounting and Economics Studies},
+  12\penalty0 (3):\penalty0 255--268, 2025{\natexlab{b}}.
+\newblock \doi{10.14419/s0pktr58}.
+
+\bibitem[Kyle(1985)]{Kyle1985}
+Albert~S. Kyle.
+\newblock Continuous auctions and insider trading.
+\newblock \emph{Econometrica}, 53\penalty0 (6):\penalty0 1315--1335, 1985.
+
+\bibitem[L{\'o}pez~de Prado(2018)]{LopezDePrado2018}
+Marcos L{\'o}pez~de Prado.
+\newblock \emph{Advances in Financial Machine Learning}.
+\newblock John Wiley \& Sons, Hoboken, NJ, 2018.
+
+\bibitem[Platt(1999)]{Platt1999}
+John~C. Platt.
+\newblock Probabilistic outputs for support vector machines and comparisons to
+  regularized likelihood methods.
+\newblock In \emph{Advances in Large Margin Classifiers}, pages 61--74. MIT
+  Press, 1999.
+
+\end{thebibliography}

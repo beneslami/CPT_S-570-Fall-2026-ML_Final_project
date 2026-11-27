@@ -31,10 +31,11 @@ def _load_auxiliary_data(
     primary_timeframe: str,
     cutoff_utc: pd.Timestamp,
     data_dir: pathlib.Path = dataset_dir,
+    candidate_tfs: tuple[str, ...] = ("5m", "15m", "1h", "4h"),
 ) -> dict:
-    """Load available auxiliary timeframes (e.g., 5m, 15m, 4h) strictly up to cutoff_utc."""
+    """Load available auxiliary timeframes strictly up to cutoff_utc."""
     aux = {}
-    for tf in ("5m", "15m", "4h"):
+    for tf in candidate_tfs:
         if tf == primary_timeframe:
             continue
         aux_path = data_dir / symbol / f"{symbol}_{tf}.csv"
@@ -54,7 +55,7 @@ def main():
         "--model",
         type=str,
         default="consensus",
-        choices=["consensus", "xgboost_bracket", "lstm", "logistic", "xgboost_price"],
+        choices=["consensus", "xgboost_bracket", "multi_rr_bracket", "direct_r_bracket", "lstm", "logistic", "xgboost_price"],
         help="Model backend to run",
     )
     parser.add_argument("--symbol", type=str, default="BTC", help="Trading symbol (e.g., BTC)")
@@ -137,6 +138,24 @@ def main():
         help="Minimum fee-adjusted expected value in R-multiples required to enter a trade (default: 0.0)",
     )
     parser.add_argument(
+        "--max-bars",
+        type=int,
+        default=32,
+        help="Max holding bars for intraday multi_rr_bracket model (default: 32 bars = 8h on 15m)",
+    )
+    parser.add_argument(
+        "--sl-quantile",
+        type=float,
+        default=0.70,
+        help="MAE quantile for Stage-1 dynamic SL model (default: 0.70)",
+    )
+    parser.add_argument(
+        "--refit-days",
+        type=int,
+        default=180,
+        help="Walk-forward periodic refitting interval in days for multi_rr_bracket (default: 180; 0 disables)",
+    )
+    parser.add_argument(
         "--xgb-reg-profile",
         type=str,
         default="strong",
@@ -154,6 +173,57 @@ def main():
         action=argparse.BooleanOptionalAction,
         default=False,
         help="Use 3-model multi-lookback sequence ensemble (LSTM lb=12, LSTM lb=24, GRU lb=48)",
+    )
+    parser.add_argument(
+        "--ev-mode",
+        type=str,
+        default="conservative",
+        choices=["conservative", "factorized_3class"],
+        help="EV gate formula for multi_rr_bracket: conservative lower-bound vs factorized 3-outcome",
+    )
+    parser.add_argument(
+        "--sl-mode",
+        type=str,
+        default="learned",
+        choices=["learned", "fixed_atr"],
+        help="Stage-1 stop-loss mode for multi_rr_bracket: learned ATR-MAE quantile vs fixed ATR multiple",
+    )
+    parser.add_argument(
+        "--fixed-sl-atr",
+        type=float,
+        default=1.5,
+        help="Fixed ATR multiple when --sl-mode fixed_atr",
+    )
+    parser.add_argument(
+        "--rr-ratios",
+        type=str,
+        default="2.0,2.5,3.0,3.5,4.0",
+        help="Comma-separated target R:R ratios for multi_rr_bracket (e.g. '2.5' for single-RR baseline)",
+    )
+    parser.add_argument(
+        "--min-ev-floor",
+        type=float,
+        default=0.12,
+        help="Minimum validation EV threshold floor in R for multi_rr_bracket",
+    )
+    parser.add_argument(
+        "--max-comm-r",
+        type=float,
+        default=0.05,
+        help="Maximum allowed round-trip commission drag in R (2*c / sl_pct <= max_comm_r)",
+    )
+    parser.add_argument(
+        "--prob-shrinkage",
+        type=float,
+        default=0.10,
+        help="Winner's-curse probability shrinkage toward prior in [0, 0.5]",
+    )
+    parser.add_argument(
+        "--entry-session",
+        type=str,
+        default="all",
+        choices=["all", "weekdays", "asia", "london", "ny", "london_ny", "ny_rth"],
+        help="Entry-and-training session mask applied on continuous real candles (default: all)",
     )
 
     args = parser.parse_args()
@@ -183,7 +253,15 @@ def main():
     train_data = dev_source.iloc[:split_at].copy()
     test_data = dev_source.iloc[split_at:].copy()
     cutoff_utc = dev_source.index[-1] + candle_length
-    auxiliary_data = (_load_auxiliary_data(args.symbol, args.timeframe, cutoff_utc, data_dir=active_data_dir)
+    aux_tfs = ("1h", "4h") if args.model in ("multi_rr_bracket", "direct_r_bracket") else ("5m", "15m", "4h")
+    auxiliary_data = (
+        _load_auxiliary_data(
+            args.symbol,
+            args.timeframe,
+            cutoff_utc,
+            data_dir=active_data_dir,
+            candidate_tfs=aux_tfs,
+        )
         if args.multi_timeframes
         else {}
     )
@@ -236,6 +314,43 @@ def main():
             target_threshold=args.min_move_atr,
             multi_timeframes=lstm_aux_tfs,
             use_sample_weights=False,
+        )
+    elif args.model == "multi_rr_bracket":
+        from models.multi_rr_bracket import MultiRRBracketModel
+
+        parsed_rrs = tuple(float(x.strip()) for x in args.rr_ratios.split(",") if x.strip())
+        backend = MultiRRBracketModel(
+            symbol=args.symbol,
+            timeframe=args.timeframe,
+            rr_ratios=parsed_rrs,
+            max_bars=args.max_bars,
+            ev_mode=args.ev_mode,
+            sl_mode=args.sl_mode,
+            fixed_sl_atr=args.fixed_sl_atr,
+            sl_quantile=args.sl_quantile,
+            commission=args.commission,
+            refit_days=args.refit_days,
+            min_ev_floor=args.min_ev_floor,
+            max_comm_r=args.max_comm_r,
+            prob_shrinkage=args.prob_shrinkage,
+            entry_session=args.entry_session,
+        )
+    elif args.model == "direct_r_bracket":
+        from models.direct_r_bracket import DirectNetRBracketModel
+
+        parsed_rrs = tuple(float(x.strip()) for x in args.rr_ratios.split(",") if x.strip())
+        backend = DirectNetRBracketModel(
+            symbol=args.symbol,
+            timeframe=args.timeframe,
+            rr_ratios=parsed_rrs,
+            max_bars=args.max_bars,
+            sl_mode=args.sl_mode,
+            fixed_sl_atr=args.fixed_sl_atr,
+            sl_quantile=args.sl_quantile,
+            commission=args.commission,
+            refit_days=args.refit_days,
+            min_ev_floor=args.min_ev_floor,
+            max_comm_r=args.max_comm_r,
         )
     elif args.model == "logistic":
         from models.logistic_regression import LogisticRegressionModel
@@ -310,7 +425,7 @@ def main():
         backend.evaluate()
         return
 
-    if args.model in ("lstm", "logistic"):
+    if args.model in ("lstm", "logistic", "multi_rr_bracket"):
         backend.evaluate()
         return
 

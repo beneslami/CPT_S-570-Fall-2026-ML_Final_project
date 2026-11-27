@@ -1,0 +1,10 @@
+% Lightweight BasicTeX compatibility shim for \NewEnviron using built-in LaTeX2e xparse (+b)
+\ProvidesPackage{environ}[2025/01/01 Lightweight shim for BasicTeX]
+\RequirePackage{xparse}
+\newcommand{\NewEnviron}[2]{%
+  \NewDocumentEnvironment{#1}{+b}{\def\BODY{##1}#2}{}%
+}
+\newcommand{\RenewEnviron}[2]{%
+  \RenewDocumentEnvironment{#1}{+b}{\def\BODY{##1}#2}{}%
+}
+\endinput
